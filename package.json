@@ -1,0 +1,19 @@
+{
+  "name": "ee-vuex",
+  "version": "1.0.0",
+  "description": "More convenient to use vuex",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "vue",
+    "vuex"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "vue": "^3.2.13"
+  }
+}

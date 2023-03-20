@@ -1,0 +1,7 @@
+node_modules/
+.svn/
+crawler/
+
+package-lock.json
+*.bat
+*.txt
