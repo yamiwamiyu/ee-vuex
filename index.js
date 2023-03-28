@@ -1,7 +1,7 @@
 import { ref, reactive, computed } from 'vue';
 
 /** 最后创建的vuex实例 */
-export const vuex = {
+const vuex = {
   install(vue) {
     for (const key in vuex)
       vuex[key].install?.(vue);
@@ -9,7 +9,7 @@ export const vuex = {
 };
 
 /** 创建一个vuex实例 */
-export function createStore(option, name = "$vuex") {
+export function createStore(option, name) {
   // 持久化数据
   const pdatas = [];
   const x = reactive({});
