@@ -42,7 +42,7 @@ export function createStore(option, name = "$vuex") {
         // 直接key: localStorage代表要持久化这个状态，其它默认
         p = true;
       } else if (value.constructor == Object) {
-        if (value.get || value.set || value.default) {
+        if (value.p || value.get || value.set || value.default) {
           // ee-vuex结构
           if (value.p)
             p = true;
@@ -146,7 +146,7 @@ export function createStore(option, name = "$vuex") {
         // 允许set的返回值覆盖原本应该设置的值
         if (set) {
           const temp = set.call(x, value);
-          if (temp) {
+          if (temp != null) {
             if (temp.constructor == Promise) {
               // 异步set时(例如api确认后再赋值)
               // 注意：这里使用了Promise，只要Promise完成，computed一定会首先触发一次get，且获得的是旧值
