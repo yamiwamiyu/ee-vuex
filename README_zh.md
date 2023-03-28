@@ -19,7 +19,9 @@ ee-vuex是vue项目中的全局状态管理器。
   - 支持的语言
 
 ### 2. 方案和对比
-vue项目中一般使用vuex和pinia来管理全局状态，请先通过下面表格看一下vuex的核心概念和ee-vuex的对比。vuex可以参考其官方文档 https://vuex.vuejs.org/zh/
+vue项目中一般使用vuex和pinia来管理全局状态，请先通过下面表格看一下vuex的核心概念和ee-vuex的对比。
+- vuex可以参考其官方文档 https://vuex.vuejs.org/zh/
+- pinia可以参考其官方文档 https://pinia.web3doc.top/core-concepts/
 
 ||vuex|ee-vuex(computed形式)|
 |-|-|-|
@@ -124,33 +126,39 @@ export default {
 ### 1.2 仓库名
 默认没有仓库名，全局仓库你应该给它起个名字。
 
-对于命名的仓库可以用以下方式全局获得其实例
-- JS引入仓库：import { \\$store1, \\$store2, \\$store3 } from 'ee-vuex'
-- 组件内调用仓库：this.\\$store1 || this.\\$store2 || this.\\$store3
-
 createStore可以创建多个不同命名的仓库，同名仓库只有最先创建的可以拥有上面第一种全局引用方式。
 
 创建多个命名仓库时，也可以通过下面方式一次性导入这些仓库
 ```
 import { createApp } from 'vue'
+import stores, { createStore } from 'ee-vuex'
+
+// 创建多个仓库
+createStore({}, "a")
+createStore({}, "b")
+createStore({}, "c")
+createStore({}, "d")
+
 // 直接导入ee-vuex默认返回的对象
-import stores from 'ee-vuex'
 createApp({}).use(stores);
 ```
 
+对于命名的仓库可以全局获得其实例，获取方式请查看[使用仓库](#2.-使用仓库)
 
-### 2. 在组件或js中使用全局状态
+
+### 2. 使用仓库
 ### 2.1 调用仓库
-对于非命名仓库，需要自己保存仓库实例。
+对于非命名仓库，需要自己保存仓库实例，可参考[创建仓库的局部仓库](#1.-创建仓库)。
 
 对于命名仓库，可以通过以下方式获取其实例
 
 2.1 JS引入仓库实例
 ```
-import { $store1, $store2, $store3 } from 'ee-vuex'
+import x from 'ee-vuex'
+const { $store1, $store2, $store3 } = x;
 ```
 
-2.2 组件内获得仓库实例(需要提前vue.use，参考[创建仓库](#1.1 创建仓库)和[仓库名](#1.2 仓库名))
+2.2 组件内获得仓库实例(需要提前vue.use，参考[创建仓库](#1.1-创建仓库)和[仓库名](#1.2-仓库名))
 ```
 // file test.vue
 <template>
@@ -160,7 +168,6 @@ import { $store1, $store2, $store3 } from 'ee-vuex'
 </template>
 
 <script type="text/javascript">
-import { createStore } from 'ee-vuex'
 export default {
   name: "test",
   mounted() {
@@ -200,7 +207,7 @@ mounted() {
 
 且当你仅想自定义其中一个字段，还会有相应的**简洁定义**方法。
 
-后面的代码都卸载创建仓库里面，创建仓库参考[定义仓库状态](#1.1 定义仓库状态)
+后面的代码都写在创建仓库里面，创建仓库参考[定义仓库状态](#1-创建仓库)
 ```
 import { createStore } from 'ee-vuex'
 createStore({
@@ -209,7 +216,7 @@ createStore({
 ```
 
 ### 1. 默认值
-状态的默认值对于异步[缓存枚举的数据](#使用场景)是非常有用的。
+状态的默认值对于异步[缓存枚举的数据](#1.-使用场景)是非常有用的。
 
 例如我们的页面支持多种语言，语言的种类需要通过api异步从后端获取，数据是一个语言对象数组。
 
@@ -246,7 +253,7 @@ key: "ee-vuex"
 key: new Date()
 ```
 
-- Function：可以用方法返回默认值，可以支持异步方法和Promise。注意请使用箭头函数，否则会被认为是[get](#get函数)或[set](#set函数)。
+- Function：可以用方法返回默认值，可以支持异步方法和Promise。注意请使用箭头函数，否则会被认为是[get](#3.-get函数)或[set](#4.-set函数)。
 ```
 // 直接返回值：ee-vuex
 key: () => "ee-vuex"
@@ -333,7 +340,7 @@ key: () => []
 持久化对于仓库来说是个很常用的功能，所以ee-vuex增加了简单的配置来协助实现而不用自己重复实现持久化。
 
 使用持久化需要注意：
-- 优先读取localStorage的值，有值则会忽略[默认值(default)](#默认值)
+- 优先读取localStorage的值，有值则会忽略[默认值(default)](#1.-默认值)
 - 保存的key就是状态的名字，暂时不支持修改，注意和你项目其它localStorage的内容不要重名
 
 <hr>
@@ -376,7 +383,7 @@ key: {
 }
 ```
 
-- 简洁定义：注意参数防止和[set函数](#set函数)混淆，注意不能用箭头函数防止和[默认值](#默认值)混淆
+- 简洁定义：注意参数防止和[set函数](#4.-set函数)混淆，注意不能用箭头函数防止和[默认值](#1.-默认值)混淆
 ```
 key() {}
 // 需要参数请写多一个无用参数
@@ -407,7 +414,7 @@ async key(value, x) {
 
 需要注意的是
 - set相同的值时，将不会调用set
-- 设置有[默认值](#默认值)时，默认值是get时赋值的，在get前你就手动先set了值，那么在get时将会忽略掉默认值以确保你设置的值不被覆盖
+- 设置有[默认值](#1.-默认值)时，默认值是get时赋值的，在get前你就手动先set了值，那么在get时将会忽略掉默认值以确保你设置的值不被覆盖
 - 调用set函数时，值还没有真正设置给状态，所以在set函数内调用get无法获得最新值，在set中可能会get到状态自身的情况可以用setTimeout延时调用。例如[登录](#登录)例子，改为设置token后立刻获取user信息，获取user信息可能会需要立刻使用token的值
 
 - 普通定义：字段set。第一个参数是当前设置的值
@@ -434,7 +441,7 @@ key(value) {
 }
 ```
 
-- 异步：异步和[get函数](#get函数)一样，set异步可用于例如需要同步设置到服务器的情况，通过catch可以阻止本次赋值
+- 异步：异步和[get函数](#3.-get函数)一样，set异步可用于例如需要同步设置到服务器的情况，通过catch可以阻止本次赋值
 ```
 // 若Promise成功，本地和你的服务器的值将会保持一致，若Promise错误，本次赋值将失败
 async lauguage(value) {
