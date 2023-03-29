@@ -6,7 +6,7 @@
 ee代表了**封装(Encapsulated)** 和 **简单(Easy)**，让开发者的代码更简洁。
 
 ### 1. 使用场景
-全局数据一般用于：
+全局状态一般用于：
 1. 跨组件共享数据
   - 登录的用户信息
   - 用户设置
@@ -91,7 +91,7 @@ vue.use(createStore({}, "$store3"))
 const store = createStore({});
 ```
 
-- 局部仓库：单个组件可调用，局部仓库可以用来代替组件的data，computed，watch使用。
+- 局部仓库：单个组件可调用，局部仓库可以用来代替组件的data，computed，watch使用
 ```
 // file test.vue
 <template></template>
@@ -115,13 +115,13 @@ export default {
 ```
 
 #### 1.1 仓库对象
-仓库对象可以定义多个状态，定义一个状态主要包含4个核心内容
+仓库对象可以定义多个状态，定义一个状态主要包含下面4个核心内容
 - [默认值](#1-默认值)
 - [是否持久化](#2-是否持久化)
 - [get函数](#3-get函数)
 - [set函数](#4-set函数)
 
-定义状态请参考[定义核心](#定义核心)
+定义状态具体请参考[定义核心](#定义核心)
 
 #### 1.2 仓库名
 创建仓库**默认没有仓库名**，全局仓库你应该给它起个名字。
@@ -219,7 +219,7 @@ mounted() {
 
 这样定义状态的好处请参考[ee-vuex的优势](#3-ee-vuex的优势)
 
-后面的代码都写在创建仓库里面，创建仓库参考[仓库对象](#1-创建仓库)
+后面的示例代码都写在创建仓库里面，创建仓库参考[仓库对象](#1-创建仓库)
 ```
 import { createStore } from 'ee-vuex'
 createStore({
@@ -232,7 +232,7 @@ createStore({
 
 ee-vuex的默认值对于异步[缓存枚举的数据](#1-使用场景)是非常有用的。
 
-例如我们的页面支持多种语言，语言的种类需要通过api异步从后端获取，数据是一个语言对象数组。
+例如我们的页面支持多种语言，语言的种类需要通过api异步从后端获取，数据是一个数组。
 
 在异步获取到数据前我们希望状态的值是一个空数组，以便页面可以直接用于v-for循环而不用繁琐的v-if判断。
 
@@ -243,7 +243,7 @@ ee-vuex的默认值对于异步[缓存枚举的数据](#1-使用场景)是非常
 
 ee-vuex的默认值具备以下特点可以实现上述需求
 - **支持数组**：即可设置多个默认值
-- **支持异步**：数组元素可以是Promise异步的，即可访问api获取值。多个异步元素会进行**队列操作**
+- **支持异步**：数组元素可以是异步的Promise，即可访问api获取值。多个异步元素会进行**队列操作**
 - **支持懒加载**：**首次get**状态时才仅**触发一次**赋值默认值的操作，即可节约性能和内存
 
 具体实现请看下面**多默认值**的示例
@@ -492,7 +492,7 @@ mounted() {
 - 调用set函数时，值还没有真正赋值给状态，所以在set函数内调用get无法获得最新值，在set中需要get到状态自身的值的情况可以用setTimeout延时调用
 ```
 key(value) {
-  // 假如set值1，将输出value 1 oldvalue undefined
+  // 假如value为1，将输出value 1 oldvalue undefined
   console.log("value", value, "oldvalue", this.key)
   // 输出$store.key: undefined
   api();
@@ -510,7 +510,7 @@ const api = () => {
 
 <hr>
 
-- 普通定义：字段set。第一个参数是当前设置的值
+- 普通定义：字段set。参数是当前设置的值
 ```
 key: {
   set(value) {}
@@ -548,7 +548,7 @@ import { createStore } from 'ee-vuex'
 import { api } from './your-api-js'
 
 createStore({
-  // (完整示例)登录的用户token
+  // (完整示例)登录用户的token
   token: {
     p: 1,
     default: "",
@@ -571,9 +571,9 @@ createStore({
     default: "cn",
     p: 1,
     async set(value) {
-      // 通知后台用户选择使用的语言
+      // 通知服务端用户选择使用的语言
       await api.setLanguage(value);
-      console.log("跟后台成功同步了语言")
+      console.log("跟服务端成功同步了value")
     }
   },
 })

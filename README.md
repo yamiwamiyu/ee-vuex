@@ -1,97 +1,97 @@
 # ee-vuex
 
-更**简单**更**方便**的Vue3项目全局状态管理器。
+A more **simple** more **convenient** Vue3 project global state manager.
 
-## 介绍
-ee代表了**封装(Encapsulated)** 和 **简单(Easy)**，让开发者的代码更简洁。
+## Introduction
+"ee" represents **Encapsulated** and **Easy**, making developers' code more concise.
 
-### 1. 使用场景
-全局数据一般用于：
-1. 跨组件共享数据
-  - 登录的用户信息
-  - 用户设置
-  - 语言偏好
-2. 需要在组件之间传递数据
-  - 搜索条件
-  - 加载状态
-3. 缓存枚举的数据
-  - 省市级联
-  - 支持的语言
+### 1. Use Case
+Global state is typically used for:
+1. Sharing data across components
+  - Logged in user information
+  - User Settings
+  - Language Preference
+2. Data needs to be passed between components
+  - Filter Condition
+  - Load Status
+3. Caching enumerated data
+  - Fixed drop-down options
+  - Supported Languages
 
-### 2. 方案和对比
-vue项目中一般使用vuex和pinia来管理全局状态，请先通过下面表格看一下vuex的核心概念和ee-vuex的对比。
-- vuex可以参考其官方文档 https://vuex.vuejs.org/zh/
-- pinia可以参考其官方文档 https://pinia.web3doc.top/core-concepts/
+### 2. Scheme and Comparison
+In a vue project, vuex and pinia are commonly used to manage global state. Please first compare the core concepts of vuex and ee-vuex through the following table.
+- vuex: https://vuex.vuejs.org/
+- pinia: https://pinia.web3doc.top/core-concepts/
 
-||vuex|ee-vuex(computed形式)|
+||vuex|ee-vuex(computed)|
 |-|-|-|
-state|- **定义**<br>state:&nbsp;{<br>&nbsp;&nbsp;key:&nbsp;value,<br>}<br>-&nbsp;**调用**<br>\\$store.state.key|- **定义**<br>key:&nbsp;value<br>-&nbsp;**调用**<br>\\$store.key|
-getters|- **定义**<br>getters:&nbsp;{<br>&nbsp;&nbsp;key(state)&nbsp;{<br>&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;state.key<br>&nbsp;&nbsp;}<br>}<br>-&nbsp;**调用**<br>\\$store.getters.key|- **定义**<br>key()&nbsp;{}<br>-&nbsp;**调用**<br>\\$store.key|
-mutations|- **定义**<br>mutations:&nbsp;{<br>&nbsp;&nbsp;key(state,&nbsp;value)&nbsp;{<br>&nbsp;&nbsp;&nbsp;&nbsp;state.key&nbsp;=&nbsp;value&nbsp;*&nbsp;2<br>&nbsp;&nbsp;}<br>}<br>-&nbsp;**调用**<br>\\$store.commit("key",&nbsp;value)|- **定义**<br>key(value)&nbsp;{&nbsp;<br>&nbsp;&nbsp;return&nbsp;value&nbsp;*&nbsp;2&nbsp;<br>}<br>-&nbsp;**调用**<br>\\$store.key&nbsp;=&nbsp;value|
-actions|- **定义**<br>actions:&nbsp;{<br>&nbsp;&nbsp;async&nbsp;key({commit},&nbsp;value)&nbsp;{<br>&nbsp;&nbsp;&nbsp;&nbsp;await&nbsp;new&nbsp;Promise(r&nbsp;=>&nbsp;{<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;setTimeout(()&nbsp;=>&nbsp;r(),&nbsp;1000)<br>&nbsp;&nbsp;&nbsp;&nbsp;})<br>&nbsp;&nbsp;&nbsp;&nbsp;commit("key",&nbsp;value)<br>&nbsp;&nbsp;}<br>}<br>-&nbsp;**调用**<br>\\$store.dispatch("key",&nbsp;value)|- **定义**<br>async&nbsp;key(value)&nbsp;{<br>&nbsp;&nbsp;await&nbsp;new&nbsp;Promise(r&nbsp;=>&nbsp;{<br>&nbsp;&nbsp;&nbsp;&nbsp;setTimeout(()&nbsp;=>&nbsp;r(value)<br>&nbsp;&nbsp;&nbsp;&nbsp;,&nbsp;1000)<br>&nbsp;&nbsp;})<br>}<br>-&nbsp;**调用**<br>\\$store.key&nbsp;=&nbsp;value|
-module|- **定义**<br>const&nbsp;a&nbsp;=&nbsp;{<br>&nbsp;&nbsp;state:&nbsp;{&nbsp;key:&nbsp;'a'&nbsp;}<br>}<br>const&nbsp;b&nbsp;=&nbsp;{<br>&nbsp;&nbsp;state:&nbsp;{&nbsp;key:&nbsp;'b'&nbsp;}<br>}<br>createStore({<br>&nbsp;&nbsp;modules:&nbsp;{<br>&nbsp;&nbsp;&nbsp;&nbsp;a:&nbsp;moduleA,<br>&nbsp;&nbsp;&nbsp;&nbsp;b:&nbsp;moduleB<br>&nbsp;&nbsp;}<br>})<br>-&nbsp;**调用**<br>\\$store.state.a.key<br>\\$store.state.b.key|- **定义**<br>createStore({<br>&nbsp;&nbsp;key:&nbsp;'a'<br>},&nbsp;'\\$a')<br>createStore({<br>&nbsp;&nbsp;key:&nbsp;'b'<br>},&nbsp;'\\$b')<br>-&nbsp;**调用**<br>\\$a.key<br>\\$b.key|
-v-model|- **定义**<br>createStore({<br>&nbsp;&nbsp;state:&nbsp;{&nbsp;key:&nbsp;undefined&nbsp;},<br>&nbsp;&nbsp;mutations:&nbsp;{<br>&nbsp;&nbsp;&nbsp;&nbsp;key(state,&nbsp;value)&nbsp;{<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;state.key&nbsp;=&nbsp;value<br>&nbsp;&nbsp;&nbsp;&nbsp;}<br>&nbsp;&nbsp;}<br>})<br>-&nbsp;**调用**<br><template><br>&nbsp;&nbsp;<input&nbsp;type="text"&nbsp;v-model="key"&nbsp;/><br></template><br>...<br>computed:&nbsp;{<br>&nbsp;&nbsp;key:&nbsp;{<br>&nbsp;&nbsp;&nbsp;&nbsp;get&nbsp;()&nbsp;{<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;this.\\$store.state.key<br>&nbsp;&nbsp;&nbsp;&nbsp;},<br>&nbsp;&nbsp;&nbsp;&nbsp;set&nbsp;(value)&nbsp;{<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;this.\\$store.commit('key',&nbsp;value)<br>&nbsp;&nbsp;&nbsp;&nbsp;}<br>&nbsp;&nbsp;}<br>}<br>|- **定义**<br>createStore({<br>&nbsp;&nbsp;key:&nbsp;undefined<br>},&nbsp;'\\$store')<br>-&nbsp;**调用**<br><template><br>&nbsp;&nbsp;<input&nbsp;type="text"&nbsp;v-model="\\$store.key"&nbsp;/><br></template><br>...|
-localStorage|- **定义**<br>createStore({<br>&nbsp;&nbsp;state:&nbsp;{&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;key:&nbsp;JSON.parse(<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;localStorage.getItem('key'))<br>&nbsp;&nbsp;},<br>&nbsp;&nbsp;mutations:&nbsp;{<br>&nbsp;&nbsp;&nbsp;&nbsp;key(state,&nbsp;value)&nbsp;{<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;state.key&nbsp;=&nbsp;value<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;localStorage.setItem('key',&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;JSON.stringify(value))<br>&nbsp;&nbsp;&nbsp;&nbsp;}<br>&nbsp;&nbsp;}<br>})|- **定义**<br>createStore({&nbsp;key:&nbsp;{&nbsp;p:&nbsp;1,&nbsp;}&nbsp;})|
+state|- **Definition**<br>state:&nbsp;{<br>&nbsp;&nbsp;key:&nbsp;value,<br>}<br>-&nbsp;**Invoke**<br>\\$store.state.key|- **Definition**<br>key:&nbsp;value<br>-&nbsp;**Invoke**<br>\\$store.key|
+getters|- **Definition**<br>getters:&nbsp;{<br>&nbsp;&nbsp;key(state)&nbsp;{<br>&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;state.key<br>&nbsp;&nbsp;}<br>}<br>-&nbsp;**Invoke**<br>\\$store.getters.key|- **Definition**<br>key()&nbsp;{}<br>-&nbsp;**Invoke**<br>\\$store.key|
+mutations|- **Definition**<br>mutations:&nbsp;{<br>&nbsp;&nbsp;key(state,&nbsp;value)&nbsp;{<br>&nbsp;&nbsp;&nbsp;&nbsp;state.key&nbsp;=&nbsp;value&nbsp;*&nbsp;2<br>&nbsp;&nbsp;}<br>}<br>-&nbsp;**Invoke**<br>\\$store.commit("key",&nbsp;value)|- **Definition**<br>key(value)&nbsp;{&nbsp;<br>&nbsp;&nbsp;return&nbsp;value&nbsp;*&nbsp;2&nbsp;<br>}<br>-&nbsp;**Invoke**<br>\\$store.key&nbsp;=&nbsp;value|
+actions|- **Definition**<br>actions:&nbsp;{<br>&nbsp;&nbsp;async&nbsp;key({commit},&nbsp;value)&nbsp;{<br>&nbsp;&nbsp;&nbsp;&nbsp;await&nbsp;new&nbsp;Promise(r&nbsp;=>&nbsp;{<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;setTimeout(()&nbsp;=>&nbsp;r(),&nbsp;1000)<br>&nbsp;&nbsp;&nbsp;&nbsp;})<br>&nbsp;&nbsp;&nbsp;&nbsp;commit("key",&nbsp;value)<br>&nbsp;&nbsp;}<br>}<br>-&nbsp;**Invoke**<br>\\$store.dispatch("key",&nbsp;value)|- **Definition**<br>async&nbsp;key(value)&nbsp;{<br>&nbsp;&nbsp;await&nbsp;new&nbsp;Promise(r&nbsp;=>&nbsp;{<br>&nbsp;&nbsp;&nbsp;&nbsp;setTimeout(()&nbsp;=>&nbsp;r(value)<br>&nbsp;&nbsp;&nbsp;&nbsp;,&nbsp;1000)<br>&nbsp;&nbsp;})<br>}<br>-&nbsp;**Invoke**<br>\\$store.key&nbsp;=&nbsp;value|
+module|- **Definition**<br>const&nbsp;a&nbsp;=&nbsp;{<br>&nbsp;&nbsp;state:&nbsp;{&nbsp;key:&nbsp;'a'&nbsp;}<br>}<br>const&nbsp;b&nbsp;=&nbsp;{<br>&nbsp;&nbsp;state:&nbsp;{&nbsp;key:&nbsp;'b'&nbsp;}<br>}<br>createStore({<br>&nbsp;&nbsp;modules:&nbsp;{<br>&nbsp;&nbsp;&nbsp;&nbsp;a:&nbsp;moduleA,<br>&nbsp;&nbsp;&nbsp;&nbsp;b:&nbsp;moduleB<br>&nbsp;&nbsp;}<br>})<br>-&nbsp;**Invoke**<br>\\$store.state.a.key<br>\\$store.state.b.key|- **Definition**<br>createStore({<br>&nbsp;&nbsp;key:&nbsp;'a'<br>},&nbsp;'\\$a')<br>createStore({<br>&nbsp;&nbsp;key:&nbsp;'b'<br>},&nbsp;'\\$b')<br>-&nbsp;**Invoke**<br>\\$a.key<br>\\$b.key|
+v-model|- **Definition**<br>createStore({<br>&nbsp;&nbsp;state:&nbsp;{&nbsp;key:&nbsp;undefined&nbsp;},<br>&nbsp;&nbsp;mutations:&nbsp;{<br>&nbsp;&nbsp;&nbsp;&nbsp;key(state,&nbsp;value)&nbsp;{<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;state.key&nbsp;=&nbsp;value<br>&nbsp;&nbsp;&nbsp;&nbsp;}<br>&nbsp;&nbsp;}<br>})<br>-&nbsp;**Invoke**<br><template><br>&nbsp;&nbsp;<input&nbsp;type="text"&nbsp;v-model="key"&nbsp;/><br></template><br>...<br>computed:&nbsp;{<br>&nbsp;&nbsp;key:&nbsp;{<br>&nbsp;&nbsp;&nbsp;&nbsp;get&nbsp;()&nbsp;{<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;this.\\$store.state.key<br>&nbsp;&nbsp;&nbsp;&nbsp;},<br>&nbsp;&nbsp;&nbsp;&nbsp;set&nbsp;(value)&nbsp;{<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;this.\\$store.commit('key',&nbsp;value)<br>&nbsp;&nbsp;&nbsp;&nbsp;}<br>&nbsp;&nbsp;}<br>}<br>|- **Definition**<br>createStore({<br>&nbsp;&nbsp;key:&nbsp;undefined<br>},&nbsp;'\\$store')<br>-&nbsp;**Invoke**<br><template><br>&nbsp;&nbsp;<input&nbsp;type="text"&nbsp;v-model="\\$store.key"&nbsp;/><br></template><br>...|
+localStorage|- **Definition**<br>createStore({<br>&nbsp;&nbsp;state:&nbsp;{&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;key:&nbsp;JSON.parse(<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;localStorage.getItem('key'))<br>&nbsp;&nbsp;},<br>&nbsp;&nbsp;mutations:&nbsp;{<br>&nbsp;&nbsp;&nbsp;&nbsp;key(state,&nbsp;value)&nbsp;{<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;state.key&nbsp;=&nbsp;value<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;localStorage.setItem('key',&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;JSON.stringify(value))<br>&nbsp;&nbsp;&nbsp;&nbsp;}<br>&nbsp;&nbsp;}<br>})|- **Definition**<br>createStore({&nbsp;key:&nbsp;{&nbsp;p:&nbsp;1,&nbsp;}&nbsp;})|
 
-### 3. ee-vuex的优势
-无论是vuex，pinia，定义一个全局状态的核心都包括
-1. state：相当于Vue组件的data
-2. getters：相当于Vue组件的computed的get
-3. mutations(vuex) actions(pinia)：相当于Vue组件的computed的set或一个method，主要用于对state进行赋值
+### 3. Advantages of ee-vuex
+Whether it's Vuex or Pinia, the core of defining a global state includes
+1. state: Equivalent to the 'data' of the Vue component
+2. getters: Equivalent to the 'computed get' of the Vue component
+3. mutations(vuex) actions(pinia): Equivalent to the 'computed set' or a method of a Vue component, mainly used to assign values to states
 
-ee-vuex则没有区分这些，ee-vuex使用的Vue组件computed的形式来定义和调用状态
+ee-vuex does not distinguish these, and ee-vuex uses the Vue component computed form to define and invoke states
 
-这意味着ee-vuex有以下的**优势**：
-- 定义更**清晰简洁**：一个状态就是一个对象，而不用分别定义到state和getters等多个对象里
-- 使用更**简单方便**：不需要commit，dispatch等多余的方法，直接调用和赋值状态即可
-- **v-model**：可以将全局状态直接用于v-model
-- **缓存**：属性值不变时可以利用computed的缓存提高get效率
+This means that ee-vuex has the following **advantages**:
+- More **clear and concise definition**: A state is an object, rather than being defined in multiple objects such as state and getters
+- More **simple and convenient to use**: No need for redundant methods such as commit and dispatch, just call and assign status directly
+- **v-model**: You can use global state directly with the v-model
+- **cache**: Computed cache can be used to improve get efficiency when attribute values remain unchanged
 
-不仅这样，ee-vuex还有更多方便和强大的地方，请详细看[定义核心](#定义核心)
+Not only that, but there are more convenient and powerful aspects of ee-vuex. Please see [Definition Core](#Definition-Core) in detail
 
 
-## 安装教程
+## Installation
 
 ```
 npm install ee-vuex
 ```
 
-## 使用说明
-使用ee-vuex请先了解以下4点
-1. [创建仓库](#1-创建仓库)
-2. [定义状态](#11-仓库对象)
-3. [引入仓库](#21-调用仓库)
-4. [调用状态](#22-调用仓库状态)
+## Usage
+Please understand the following 4 points before using ee-vuex
+1. [Create Store](#1-Create-Store)
+2. [Define State](#11-Store-Object)
+3. [Import Store](#21-Invoke-Store)
+4. [Invoke State](#22-Invoke-State)
 
-### 1. 创建仓库
-创建仓库使用createStore方法，方法接收2个参数
+### 1. Create Store
+Create a store using the createStore method, which receives 2 parameters
 
-1.1 [仓库对象](#11-仓库对象)：可以定义多个状态
+1.1 [Store Object](#11-Store-Object): Multiple states can be defined
 
-1.2 [仓库名](#12-仓库名)：指定仓库名字方便全局引用
+1.2 [Store Name](#12-Store-Name): Specify a store name to import store
 
-- 全局仓库：整个项目可调用，这是使用ee-vuex的一般用法
+- Global Store: The entire project is callable, which is a common use of ee-vuex
 ```
 import { createApp } from 'vue'
 import { createStore } from 'ee-vuex'
 
-const vue = createApp({ /* 组件 */ });
+const vue = createApp({ /* Component */ });
 
 vue.use(createStore({
-  // 这里定义状态
+  // Define states here
 },
-// 仓库的名字
+// Store name
 "$store"))
 
-// 多个仓库
+// Multiple stores
 vue.use(createStore({}, "$store2"))
 vue.use(createStore({}, "$store3"))
 
-// 非命名仓库，需要自己保存store实例，调用vue.use(store)无任何效果
+// A non named warehouse requires you to save the store instance yourself. Calling vue.use(store) has no effect
 const store = createStore({});
 ```
 
-- 局部仓库：单个组件可调用，局部仓库可以用来代替组件的data，computed，watch使用。
+- Local Store: A single component can be called, and a local store can be used instead of the component's data, computed, and watch
 ```
 // file test.vue
 <template></template>
@@ -102,9 +102,9 @@ export default {
   name: "test",
   data() {
     return {
-      // 此时store就像仓库名，通过this.store就可以调用仓库
+      // At this point, the store is like the store name, and the store can be called through this.store
       store: createStore({
-        // 定义你的仓库
+        // Define states here
       })
     }
   },
@@ -114,55 +114,53 @@ export default {
 <style></style>
 ```
 
-#### 1.1 仓库对象
-仓库对象可以定义多个状态，定义一个状态主要包含4个核心内容
-- [默认值](#1-默认值)
-- [是否持久化](#2-是否持久化)
-- [get函数](#3-get函数)
-- [set函数](#4-set函数)
+#### 1.1 Store Object
+Store object can define multiple states, and defining a state mainly includes the following four core contents
+- [Default Value](#1-Default-Value)
+- [Persistence](#2-Persistence)
+- [Get Function](#3-Get-Function)
+- [Set Function](#4-Set-Function)
 
-定义状态请参考[定义核心](#定义核心)
+For details, please refer to [Definition Core](#Definition-Core)
 
-#### 1.2 仓库名
-创建仓库**默认没有仓库名**，全局仓库你应该给它起个名字。
+#### 1.2 Store Name
+Creating a store **does not have a store name by default**. You should give it a name for the global store.
 
-createStore可以创建**多个不同命名**的仓库，对于命名的仓库可以全局获得其实例，获取方式请查看[调用仓库](#21-调用仓库)，同名仓库只有最先创建的那个可以全局获得其实例。
+`createStore` can create **multiple store with different names**. For a named store, its instance can be obtained globally. For the method of obtaining it, please see [Call Store](#21-Call-Store). Only the store with the same name that was first created can obtain its instance globally.
 
-创建多个命名仓库时，也可以通过下面方式**一次性全局导入**这些仓库
+When creating multiple named stores, you can also globally import these stores in the following way
 ```
 import { createApp } from 'vue'
 import stores, { createStore } from 'ee-vuex'
 
-// 创建多个仓库
+// Create multiple stores
 createStore({}, "a")
 createStore({}, "b")
 createStore({}, "c")
 createStore({}, "d")
 
-// 直接导入ee-vuex默认返回的对象就可以在Vue组件中使用a b c d仓库了
+// Directly importing the objects returned by ee-vuex by default allows you to use the a b c d store in the Vue component
 createApp({}).use(stores);
 ```
 
 
-### 2. 使用仓库
-#### 2.1 调用仓库
-对于非命名仓库，需要自己保存仓库实例，可参考[创建仓库的局部仓库](#1-创建仓库)。
+### 2. Use Store
+#### 2.1 Invoke Store
+For non named stores, you need to save the store instance yourself. For details, please refer to [Local Store of Create Store](#1-Create-Store).
 
-对于命名仓库，可以通过仓库名获取其实例
+For a named store, you can obtain its instance through the store name
 
-- JS引入全局仓库实例(不需要vue.use)
+- JS imports a global store instance (vue.use is not required)
 ```
 import x from 'ee-vuex'
-// $store1, $store2, $store3为createStore时传入的仓库名
 const { $store1, $store2, $store3 } = x;
 ```
 
-- 组件内获得仓库实例(需要vue.use，参考[创建仓库](#1-创建仓库)和[仓库名](#12-仓库名))
+- Obtain a store instance within the component (requires vue.use, refer to [Create Store](#1-Create-Store) and [Store Name](#12-Store-Name))
 ```
 // file test.vue
-// $store1, $store2, $store3为createStore时传入的仓库名
 <template>
-  <!-- 模板中直接使用[仓库名]获得仓库实例 -->
+  <!-- Directly use [Store Name] in the template to obtain a store instance -->
   <div>{{ $store1 }}</div>
   <div>{{ $store2 }}</div>
   <div>{{ $store3 }}</div>
@@ -172,20 +170,20 @@ const { $store1, $store2, $store3 } = x;
 export default {
   name: "test",
   mounted() {
-    // JS中使用this.[仓库名]获得仓库实例
+    // Use 'this' in JS
     this.$store1 || this.$store2 || this.$store3
   }
 }
 </script>
 ```
 
-#### 2.2 调用仓库状态
-有了仓库实例后，调用仓库的状态非常简单，就像调用一个computed的属性一样。
+#### 2.2 Invoke State
+With the store instance, it is very simple to call the store states, just like calling a computed attribute.
 
-可以看到下面示例代码非常简单，ee-vuex的更多优势请参考[ee-vuex的优势](#3-ee-vuex的优势)
+As you can see, the following example code is very simple. For more advantages of ee-vuex, please refer to [Advantages of ee-vuex](#3-Advantages-of-ee-vuex)
 
-(假设下面代码存在全局仓库$store，仓库包含状态state1)
-- 模板 get
+(Assume that the following code exists in the global store $store, which contains the state state1.)
+- Template get
 ```
 <div>{{ $store.state1 }}</div>
 ```
@@ -195,7 +193,7 @@ mounted() {
   const state1 = this.$store.state1;
 }
 ```
-- 模板 set
+- Template set
 ```
 <input type="text" v-model="$store.state1" />
 ```
@@ -207,65 +205,63 @@ mounted() {
 ```
 
 
-## 定义核心
+## Definition Core
 
-在ee-vuex的仓库定义中，一个状态就是一个对象，这个对象包含下面4个字段
-- default: 状态的[(默认值)](#1-默认值)
-- p: 利用localStorage自动设置和还原状态值[(是否持久化)](#2-是否持久化)
-- get: 获取状态时触发的[(get函数)](#3-get函数)
-- set: 赋值状态时触发的[(set函数)](#4-set函数)
+In the store definition of ee vuex, a state is an object that contains the following 4 fields
+- default: State's [(Default Value)](#1-Default-Value)
+- p: Automatically set and restore state values using localStorage[(Persistence)](#2-Persistence)
+- get: Triggered when obtaining state[(Get Function)](#3-Get-Function)
+- set: Triggered when assigning a status[(Set Function)](#4-Set-Function)
 
-且当你仅想自定义其中一个字段时，还会有相应的**简洁定义**方法。
+And when you only want to customize one of these fields, there will also be a corresponding **concise definition** method.
 
-这样定义状态的好处请参考[ee-vuex的优势](#3-ee-vuex的优势)
+For the benefits of defining states in this way, please refer to [Advantages of ee-vuex](#3-Advantages-of-ee-vuex)
 
-后面的代码都写在创建仓库里面，创建仓库参考[仓库对象](#1-创建仓库)
+The following example code is written in the Create Store reference [Store Object](#1-Create-Store)
 ```
 import { createStore } from 'ee-vuex'
 createStore({
-  // 后面的示例代码都应该是写在这个对象里的
+  // The following example code should be written in this object
 })
 ```
 
-### 1. 默认值
-普通的默认值很好理解，看后面的代码示例即可。
+### 1. Default Value
+The common default values are easy to understand, just look at the following code examples.
 
-ee-vuex的默认值对于异步[缓存枚举的数据](#1-使用场景)是非常有用的。
+The default value of ee-vuex is very useful for asynchronous [caching enumerated data](#1-Use-Case).
 
-例如我们的页面支持多种语言，语言的种类需要通过api异步从后端获取，数据是一个语言对象数组。
+For example, our page supports multiple languages, and the type of language needs to be asynchronously obtained from the backend through the API. The data is an array.
 
-在异步获取到数据前我们希望状态的值是一个空数组，以便页面可以直接用于v-for循环而不用繁琐的v-if判断。
+Before asynchronously obtaining data, we want the value of the state to be an empty array, so that the page can be directly used in a v-for loop without tedious v-if judgment.
 
-上述的例子中，状态默认值应该具备以下几个特点：
-- 默认值有2个
-- 一开始默认值为空数组
-- api异步获取数据后替换默认值
+In the above example, the status default value should have the following characteristics:
+- There are 2 default values
+- Initially, the default value is an empty array
+- Replace default values after api asynchronously obtains data
 
-ee-vuex的默认值具备以下特点可以实现上述需求
-- **支持数组**：即可设置多个默认值
-- **支持异步**：数组元素可以是Promise异步的，即可访问api获取值。多个异步元素会进行**队列操作**
-- **支持懒加载**：**首次get**状态时才仅**触发一次**赋值默认值的操作，即可节约性能和内存
+The default value of ee-vuex has the following characteristics to meet the above requirements
+- **Support Array**: Multiple default values can be set
+- **Supports Asynchronous**: The array element can be an asynchronous Promise, which accesses the API to obtain values. Multiple asynchronous elements perform **queue operations**
+- **Support Lazy Loading**: **First get** will **Trigger once** an assignment of the default value, which can save performance and memory
 
-具体实现请看下面**多默认值**的示例
-
-作者的话：一般来说，应该只有上面例子中使用2个默认值的情况，至少我暂时没有想到需要使用超过2个默认值的场景。虽然用数组实现了允许多个默认值的队列，但我希望仅用一个更简便的定义来配置这2个默认值。期待有想法的你能帮作者提供更好的方案，或者给出确实需要2个以上默认值的实战场景
+For specific implementation, please see the following example of **multiple default values**
 
 <hr>
 
-- 普通定义：字段default
+- General Definition: Field *default*
 ```
 key: {
   default: undefined,
 }
 ```
 
-- 简洁定义：直接写值
+- Concise Definition: Write values directly
 ```
 key: undefined
 ```
 
-默认值支持非常多的类型，下面示例代码一一进行举例
-- 普通值：直接赋值即可
+The default value supports a wide range of types. The following example codes provide examples one by one
+- Normal value: directly assign a value
 ```
 key: 1
 key: true
@@ -273,54 +269,54 @@ key: "ee-vuex"
 key: new Date()
 ```
 
-- Function：可以用方法返回默认值，可以支持异步方法和Promise。注意简洁定义时请使用箭头函数，否则会被认为是[get函数](#3-get函数)或[set函数](#4-set函数)。
+- Function: You can use methods to return default values, and support asynchronous methods and Promises. Note: Please use arrow functions for concise definitions, otherwise they will be considered as [get function](#3-Get-Function) or [set function](#4-Set-Function).
 ```
-// 直接返回值：ee-vuex
+// Direct return value: ee-vuex
 key: () => "ee-vuex"
-// 异步Promise返回值：2秒前undefined，2秒后ee-vuex
+// Asynchronous Promise return value: undefined 2 seconds ago, ee-vuex 2 seconds later
 key: () => new Promise(resolve => {
   setTimeout(() => {
     resolve("ee-vuex")
   }, 2000)
 })
-// async方法异步返回值：2秒前undefined，2秒后10000
+// The async method asynchronously returns a value: undefined 2 seconds ago, 10000 after 2 seconds
 key: async () => {
-  // 异步获取值
+  // Get values asynchronously
   const value = await new Promise(
     resolve => {
       setTimeout(() => {
         resolve(100)
       }, 2000)
     })
-  // 可以对值进行自定义操作
+  // You can customize values
   return value * value;
 }
-// NG：会被认为是get函数，默认值undefined
+// NG: Will be considered a get function, with the default value undefined
 key: function() { return 5 }
 ```
 
-- Object：使用简单定义时需要和状态定义的Object区分，不能包含p，default，get，set的任意一个
+- Object: When using a simple definition, it is necessary to distinguish it from the object defined by the state. It cannot contain any of p, default, get, or set
 ```
-// OK：默认值为对象
+// OK: Default value is object
 key: {
   name: 'ee-vuex',
   isCool: true,
 }
-// NG：默认值为true
+// NG: The default value is true
 key: {
   name: 'ee-vuex',
-  // 包含了default
+  // Contains default
   default: true,
 }
-// 非要包含p，default，get，set字段的对象时，可以使用Function，或者不使用简洁定义
-// OK：使用Function返回值，默认值为对象
+// When you want to include objects with p, default, get, and set fields, you can use Function or do not use concise definitions.
+// OK: Use Function to return a value. The default value is the object
 key: () => {
   return {
     name: 'ee-vuex',
     default: true,
   }
 }
-// OK：使用普通定义，默认值为对象
+// OK: Use general definitions, with the default value being the object
 key: {
   default: {
     name: 'ee-vuex',
@@ -329,9 +325,9 @@ key: {
 }
 ```
 
-- 多默认值：使用数组，数组里的元素支持上面所有类型，有异步时从前往后队列赋值
+- Multiple default values: Use an array. The elements in the array support all of the above types. When asynchronous, assign values from the front to the back queue
 ```
-// 2秒前[]，2秒后[1,2,3]，再2秒后[4,5,6]
+// Two seconds ago [], two seconds later [1,2,3], and two seconds later [4,5,6]
 key: [[],
   () => new Promise(r => {
     setTimeout(() => {
@@ -344,40 +340,40 @@ key: [[],
     }, 2000)
   }),
 ]
-// 注意想要默认值是数组时，要嵌套数组或使用Function，不论是普通定义还是简洁定义
-// NG：默认值为3
+// Note that when you want the default value to be an array, you need to nest the array or use a Function, whether it is a general definition or a concise definition
+// NG: The default value is 3
 key: [1, 2, 3]
-// OK：多默认值，采用第一个默认值，默认值[]
+// OK: Multiple default values, using the first default value, default value []
 key: [[]]
-// OK：Function返回值[]
+// OK: Function return value []
 key: () => []
 ```
-### 2. 是否持久化
-仓库状态的值是保存在内存里的，当我们刷新页面时，状态的值就会被清空了。
+### 2. Persistent
+The value of the store state is stored in memory, and when we refresh the page, the value of the status will be cleared.
 
-持久化就是当我们希望刷新页面，状态的值仍然保留上次运行的值。可用于例如登录的token，用户选择的语言等场景。
+Persistence is when we want to refresh a page, the value of the state remains the value of the last run. It can be used in scenarios such as login tokens, user selected languages, and so on.
 
-一般我们会把仓库的状态保存到localStorage中，初始化时读出来，set时写进去。
+Generally, we will save the state of the store to localStorage, read it out during initialization, and write it in during set.
 
-持久化对于仓库来说是个很常用的功能，所以ee-vuex增加了简单的配置来协助实现而不用自己重复实现持久化。
+Persistence is a very common function for stores, so ee-vuex adds simple configurations to assist in implementation without having to implement persistence repeatedly.
 
-使用持久化需要注意：
-- 优先读取localStorage的值，有值则会忽略[默认值(default)](#1-默认值)
-- 保存的key就是状态的名字，暂时不支持修改，注意和你项目其它localStorage的内容不要重名
+Using persistence requires attention:
+- Priority is given to reading the value of localStorage. If there is a value, [Default Value](#1-Default-Value) will be ignored
+- The saved key is the name of the state, and modification is temporarily not supported. Please note that it does not have the same name as other localStorage content in your project
 
 <hr>
 
-- 普通定义：字段p。p为Persistent的首字母缩写，用缩写是因为这个单词太难记了
+- General Definition: Field *p*. 'p' is an acronym for Persistent, which is used because it is too difficult to remember
 ```
 token: { p: 1 }
 ```
 
-- 简洁定义：直接赋值localStorage
+- Concise Definition: Directly assign a value to localStorage
 ```
 token: localStorage
 ```
 
-- 自定义实现：利用[默认值](#1-默认值)和[set函数](#4-set函数)也可以轻松实现
+- Custom Implementation: It can also be easily implemented using [Default Value](#1-Default-Value) and [Set Function](#4-Set-Function)
 ```
 token: {
   default: () => JSON.parse(localStorage.getItem('token')),
@@ -389,44 +385,44 @@ token: {
   }
 }
 ```
-### 3. get函数
-就像是Vue组件computed的get一样是一个函数，ee-vuex的get函数支持异步即返回Promise。
+### 3. Get Function
+Like the Vue component computed get, it is a function. The ee-vuex get function supports asynchronous return of Promise.
 
-当返回Promise时，Promise完成并返回非空值时，会调用set设置这个返回值给状态。
+When Promise is returned, and Promise completes and returns a non null value, set will be called to set the return value to the status.
 
-这对于需要在get时可以自动异步获取值的情况很有用，例如实战中的[登录](#登录)例子。
+This is useful when it is necessary to automatically and asynchronously obtain values during get, such as the [Login](#Login) example in actual combat.
 
-跟默认值的不同在于默认值仅set一次不会改变，而像登录例子允许登出的情况，下次可能登录其它账号就需要重新异步获取值，此时应该使用异步get会更方便。
+The difference from the default value is that the default value is only set once and does not change. However, in the case where the login example allows logout, the next time you log in to another account, you may need to retrieve the value asynchronously. At this time, it should be more convenient to use asynchronous get.
 
 <hr>
 
-- 普通定义：字段get。第一个参数可以获得当前状态值。注意在值有更新时computed会刷新get的缓存，在get函数中使用this.key获得的还是缓存的值
+- General Definition: Field *get*. The first parameter obtains the current status value. Note that computed will refresh the cache of the get when the value is updated, and using this.key in the get function will still obtain the cached value
 ```
 key: {
   get(value) {
-    // this.key只能获得缓存的值
+    // this.key can only obtain cached values
     console.log("value", value, "oldvalue", this.key)
   }
 }
 ```
 
-- 简洁定义：注意参数个数防止和[set函数](#4-set函数)混淆，注意不能用箭头函数防止和[默认值](#1-默认值)混淆
+- Concise Definition: Note that the number of parameters should not be confused with [Set Function](#4-Set-Function), and that arrow functions should not be used to prevent confusion with [Default Value](#1-Default-Value)
 ```
 key() {}
-// OK：需要参数请写多一个无用参数
+// OK: Parameter required, please write one more useless parameter
 key(value, x) {}
-// OK：可以function定义
+// OK: Can be defined by function
 key: function() {}
-// NG：不可以用箭头函数，会被认为是默认值
+// NG: The arrow function cannot be used and will be considered the default value
 key: () => {}
 ```
 
-- 异步：异步Promise的返回值是直接set给了状态，从而引发状态改变，computed缓存失效，如果是模板引用状态则会再次get一次状态，所以要注意加判断防止多次异步取值造成死循环
+- Asynchronous: The return value of an asynchronous promise is directly set to the state, causing a state change. The computed cache becomes invalid. If it is a template reference state, the state will be obtained again. Therefore, it is important to use judgment to prevent multiple asynchronous values from causing a dead cycle
 ```
-// 设置token后再获取key时，2秒前返回undefined，2秒后返回和token一样的值
+// When obtaining a key after setting the token, an undefined value is returned 2 seconds ago, and the same value as the token is returned 2 seconds later
 token: undefined,
 async key(value, x) {
-  // 注意加判断在没有值时赋值，防止多次异步取值
+  // Pay attention to adding judgment to assign values when there is no value, to prevent multiple asynchronous values
   if (this.token && !value) {
     return await new Promise(r => {
       setTimeout(() => {
@@ -436,13 +432,13 @@ async key(value, x) {
   }
 }
 ```
-### 4. set函数
-就像是Vue组件computed的set一样是一个函数，同样的，ee-vuex的set函数也支持异步，就像vuex和pinia的Actions。
+### 4. Set Function
+Like the Vue component computed set, it is a function. Similarly, the ee-vuex set function also supports asynchronism, like the Actions of vuex and pinia.
 
-需要注意的是
-- set相同的值时，将不会调用set
+It should be noted that:
+- Set will not be called when the same value is set
 ```
-// 定义状态
+// Define state
 key: {
   default: 1,
   set(value) {
@@ -450,59 +446,59 @@ key: {
   }
 }
 
-// Vue组件
+// Vue Component
 mounted() {
-  // 将不会在控制台输出new value 1
+  // 'new value 1' will not be output on the console
   this.$store.key = 1;
 }
 ```
-- 状态有[默认值](#1-默认值)时，默认值是get时赋值的，在get前你就手动先set了值，那么在get时将会忽略掉默认值以确保你设置的值不被默认值覆盖。但是如果你的默认值包含异步且已经在执行，那么set也无法停止正在执行的异步操作，可能会导致异步默认值覆盖你set的值的情况，请尽量不要这样设计状态
+- When the status has [Default Value](#1-Default-Value), the default value is assigned when getting. If you manually set the value before getting, the default value will be ignored during get to ensure that the value you set is not overwritten by the default value. However, if your default value contains asynchronism and is already executing, then set cannot stop the executing asynchronous operation, which may cause the asynchronous default value to overwrite your set value. Please try not to design the state in this way.
 ```
-// 定义状态
+// Define state
 key: [1, () => new Promise(r => {
     setTimeout(() => {
       r(3)
     }, 2000)
   })]
 
-// Vue组件
-// 示例1：先set再get
+// Vue Component
+// Example 1: set before get
 mounted() {
-  // 先set，key的值为2，默认值将不再生效
+  // Set first, the value of key is 2, and the default value will no longer be valid
   this.$store.key = 2;
-  console.log(this.$store.key); // 输出2
-  // 默认值已经不再生效，后面key的值一致是2
+  console.log(this.$store.key); // output 2
+  // The default value is no longer valid, and the subsequent key values are consistently 2
   setTimeout(() => {
-    console.log(this.$store.key); // 输出2
+    console.log(this.$store.key); // output 2
   }, 3000)
 }
-// 示例2：先get再set
+// Example 2: get before set
 mounted() {
-  // 先get，已经设置了默认值1，Promise也已经在执行
-  console.log(this.$store.key); // 输出1
-  // set，key为2
+  // Get first, the default value of 1 has been set, and Promise is already being executed
+  console.log(this.$store.key); // output 1
+  // Set the key to 2
   this.$store.key = 2;
-  console.log(this.$store.key); // 输出2
-  // Promise已经在执行，set无法中断，2秒后key将变为异步的默认值3
+  console.log(this.$store.key); // output 2
+  // Promise is already executing, and set cannot be interrupted. After 2 seconds, the key will change to the asynchronous default value of 3
   setTimeout(() => {
-    console.log(this.$store.key); // 输出3
+    console.log(this.$store.key); // output 3
   }, 3000)
 }
 ```
-- 调用set函数时，值还没有真正赋值给状态，所以在set函数内调用get无法获得最新值，在set中需要get到状态自身的值的情况可以用setTimeout延时调用
+- When calling the set function, the value has not been actually assigned to the state, so calling get within the set function cannot obtain the latest value. If you need to get the value of the state itself in the set function, you can use setTimeout to delay the call
 ```
 key(value) {
-  // 假如set值1，将输出value 1 oldvalue undefined
+  // If the value is 1, 'value 1 oldvalue undefined' will be output
   console.log("value", value, "oldvalue", this.key)
-  // 输出$store.key: undefined
+  // output '$store.key: undefined'
   api();
   setTimeout(() => {
-    // 输出$store.key: 1
+    // output '$store.key: 1'
     api();
   })
 }
 
-// api方法打印仓库状态key的值
+// The API method prints the value of the store state key
 const api = () => {
   console.log("$store.key:", $store.key)
 }
@@ -510,45 +506,45 @@ const api = () => {
 
 <hr>
 
-- 普通定义：字段set。第一个参数是当前设置的值
+- General Definition: Field set. The parameter is the currently set value
 ```
 key: {
   set(value) {}
 }
 ```
 
-- 简洁定义：注意仅1个参数就会被视为set函数，即便是箭头函数
+- Concise Definition: Note that only one parameter is considered a set function, even if it is an arrow function
 ```
 key(value) {}
-// 可以function定义
+// Can be defined by function
 key: function(value) {}
-// 可以箭头函数定义
+// Can be defined by arrow function
 key: (value) => {}
 ```
 
-- 返回值：调用set时，值还没有真正设置给状态，可以通过返回非空值来决定最终状态的值
+- Return Value: When calling set, the value has not been actually set to the state. You can determine the final state value by returning a non null value
 ```
-// 例如value为2，最终key的值为4
+// For example, the value is 2, and the final key value is 4
 key(value) {
   return value * value;
 }
 ```
 
-- 异步：异步和[get函数](#3-get函数)一样，set异步可用于例如需要同步设置到服务器的情况，通过catch可以阻止本次赋值
+- Asynchronous: Asynchronous is the same as the [Get Function](#3-Get-Function). Set asynchrony can be used, for example, when synchronous settings are required to the server. Using catch can prevent this assignment
 ```
-// 若Promise成功，本地和服务器的值将会保持一致，若Promise错误，本次赋值将失败
+// If Promise is successful, the local and server values will remain consistent. If Promise is incorrect, this assignment will fail.
 async lauguage(value) {
   await api.setLanguage(value);
-  console.log("跟后台成功同步了value")
+  console.log("Successfully synchronized value with the server")
 },
 ```
-### 完整示例
+### Complete Example
 ```
 import { createStore } from 'ee-vuex'
 import { api } from './your-api-js'
 
 createStore({
-  // (完整示例)登录的用户token
+  // (Complete Example)The token of the logged in user
   token: {
     p: 1,
     default: "",
@@ -558,34 +554,34 @@ createStore({
         this.user = undefined;
     }
   },
-  // (get示例)登录的用户信息：没有数据时从后台获取，获取前返回空对象
+  // (get example)Login user information: Obtain from the background when there is no data, and return an empty object before obtaining
   user(value, x) {
     if (!value && this.token)
       return api.getUser();
     return value || {};
   },
-  // (默认值示例)所有语言：从后台获取所有语言
+  // (default value example)All languages: Get all languages from the background
   languages: [[], () => api.getLanguages()],
-  // (set示例)用户设置语言：默认cn，且能持久化
+  // (set example)User setting language: default en, and can be persistent
   language: {
-    default: "cn",
+    default: "en",
     p: 1,
     async set(value) {
-      // 通知后台用户选择使用的语言
+      // Notify the server user to choose the language to use
       await api.setLanguage(value);
-      console.log("跟后台成功同步了语言")
+      console.log("Successfully synchronized value with the server")
     }
   },
 })
 ```
 
-## 更多实战
+## More Example
 
-### 登录
+### Login
 
-1. 用户登录之后拥有了token，token需要持久化，token的get需要增加'bearer '前缀
-2. 首次调用user时用token从后台接口获取用户信息
-3. 用户登出后将清空token和user
+1. After the user logs in, they have a token that needs to be persisted, and the get of the token needs to be prefixed with 'bearer '
+2. Use token to obtain user information from the background interface when calling user for the first time
+3. The token and user will be cleared after the user logs out
 
 - vuex
 
@@ -594,7 +590,7 @@ import { createStore } from 'vuex'
 
 const store = createStore({
   state: {
-    // 还原持久化的token作为默认值
+    // Restore the persistent token as the default value
     token: localStorage.getItem('token'),
     user: undefined,
   },
@@ -604,14 +600,14 @@ const store = createStore({
     },
     user(state) {
       if (!state.user && state.token) {
-        // 通过后台api获取用户信息，这里使用setTimeout代替
-        // 问题1. 如果模板有多处引用了getters.user，在异步请求结束获得user前，会多次触发异步请求
+        // Obtain user information through the background API, using setTimeout instead
+        // Problem 1. If the template references getters.user in multiple places, the asynchronous request will be triggered multiple times before the asynchronous request ends and the user is obtained
         setTimeout(() => {
-          // 问题2. getters中无法使用this指向仓库当前实例
-          store.commit('setUser', { name: '登录的用户' })
+          // Problem 2. Cannot use this in getters to point to the current instance of the store
+          store.commit('setUser', { name: 'UserName' })
         }, 5000)
       }
-      // 让api获取到用户信息之前返回空对象以防止空引用
+      // Let the API return an empty object before obtaining user information to prevent empty references
       return state.user || {};
     },
   },
@@ -619,18 +615,17 @@ const store = createStore({
     setToken(state, token) {
       state.token = token;
       if (token) {
-        // 将token持久化
+        // Persisting the token
         localStorage.setItem('token', token)
       } else {
-        // 清除token，也把user信息一并清除
+        // Clear the token and also clear the user information together
         localStorage.removeItem('token');
-        // mutations中this可以指向store当前实例
         this.commit('setUser', undefined);
       }
     },
     setUser(state, user){
       state.user = user;
-      // 问题3. 无论清空token或user，都应该将另一个状态一并清空，但是互相清空会导致死循环
+      // Problem 3. Regardless of clearing token or user, the other state should be cleared together, but clearing each other can lead to a dead cycle
       if (!user)
         this.commit('setToken', undefined);
     },
@@ -640,12 +635,12 @@ const store = createStore({
 export default store;
 ```
 
-代码里标出了**vuex的问题**
+Problems with **vuex**
 
-1. get下异步获取数据并set，多次get时会多次异步获取数据造成性能损失
-2. get下需要对其它状态进行set时，作用域没有this调用不方便
-3. set相同的值也会执行set，来回set会造成死循环
-4. 一个状态要定义3遍(state, getters, mutations)，代码不简洁
+1. Get asynchronously obtains data and sets it. When getting multiple times, obtaining data asynchronously multiple times can cause performance losses
+2. When it is necessary to set other states under get, it is inconvenient to call the scope without this
+3. Setting the same value will also execute set, and setting back and forth will cause a dead loop
+4. A state needs to be defined three times (state, getters, mutations), and the code is not concise
 
 - ee-vuex
 
@@ -659,7 +654,7 @@ export default createStore({
       return 'bearer ' + value;
     },
     set(value) {
-      // 清除token，也把user信息一并清除
+      // Clear the token and also clear the user information together
       if (!value)
         this.user = undefined;
     }
@@ -667,22 +662,22 @@ export default createStore({
   user: {
     get(value) {
       if (!value) {
-        // 通过后台api获取用户信息，这里使用setTimeout代替
-        // 对比1. 如果模板有多处引用了user，也仅会触发一次异步请求
-        // 因为user值并没有改变，computed的特性会返回user的缓存值
+        // Obtain user information through the background API, using setTimeout instead
+        // Comparison 1. If the template references a user in multiple places, only one asynchronous request will be triggered
+        // Because the user value has not changed, the computed feature returns the cached value of the user
         setTimeout(() => {
-          // 对比2. get中也可以使用this指向仓库当前实例
-          this.user = { name: '登录的用户' };
+          // Comparison 2. This can also be used in get to point to the current instance of the warehouse
+          this.user = { name: 'UserName' };
         }, 5000)
       }
     },
     set(value) {
       if (!value) {
-        // 对比3. 无论清空token或user，都应该将另一个状态一并清空，互相清空也不会导致死循环
-        // 因为set一样的值，不会触发set方法，类似于Vue组件的watch
+        // Comparison 3. Regardless of clearing token or user, the other state should be cleared together, and mutual clearing will not lead to a dead cycle
+        // Because of the same value as set, the set method will not be triggered, similar to the Vue component's watch
         if (!user)
           this.commit('setToken', undefined);
-        // 让api获取到用户信息之前返回空对象以防止空引用
+        // Let the API return an empty object before obtaining user information to prevent empty references
         return {};
       }
     }
@@ -690,9 +685,9 @@ export default createStore({
 })
 ```
 
-代码里标出了**ee-vuex的对比**
+The code indicates a comparison between **ee-vuex**
 
-1. get下异步获取数据并set，多次get时会返回缓存提高行能
-2. get下需要对其它状态进行set时，作用域可以用this指向自身
-3. set相同的值不会执行set，来回set也不会造成死循环
-4. 一个状态仅定义一个对象，代码简洁
+1. Get asynchronously obtains data and sets it. When getting multiple times, the cache will be returned to improve line performance
+2. When other states need to be set under get, the scope can be pointed to itself using this
+3. Setting the same value does not execute set, and round-trip sets do not cause a dead loop
+4. A state only defines one object, and the code is concise
