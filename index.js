@@ -22,15 +22,15 @@ export function createStore(option, name) {
     let p;
 
     if (value) {
-      if (value.constructor == Function) {
+      if (value.constructor == Function || value.constructor?.name == 'AsyncFunction') {
         if (value.length == 1) {
           // set方法
           set = value;
         } else {
           // key: () => {} 缺少value.prototype ，视为设置默认值
-          // key() {} 缺少value.prototype ，视为get
+          // [async] key() {} 缺少value.prototype ，视为get
           // key: function [name]() {} 有value.prototype ，视为get
-          if (value.prototype || value.toString().startsWith(key)) {
+          if (value.prototype || value.toString().startsWith(key) || value.toString().startsWith('async ' + key)) {
             // get方法
             get = value;
           } else {
