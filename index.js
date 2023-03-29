@@ -103,7 +103,14 @@ export function createStore(option, name) {
               if (d.constructor == Function || d.constructor?.name == 'AsyncFunction')
                 dret = d.call(x);
               if (dret && dret.constructor == Promise) {
-                dret.then(i => x[key] = i);
+                dret.then(i => {
+                  // 有异步时，默认值将形成队列，set时防止清空后面的默认值
+                  setDefaultValue = true;
+                  x[key] = i;
+                  setDefaultValue = false;
+                });
+                // 有异步时，暂时停止赋值默认值，后面的默认值进行队列赋值
+                break;
               } else {
                 x[key] = dret;
               }
@@ -141,7 +148,7 @@ export function createStore(option, name) {
         if (v.value === value)
           return;
         // 外部调用set比调用get还要先的话，忽略掉get的默认值
-        if (!setDefaultValue)
+        if (!setDefaultValue && __default.length)
           __default.length = 0;
         // 允许set的返回值覆盖原本应该设置的值
         if (set) {
@@ -174,8 +181,8 @@ export function createStore(option, name) {
         const pdata = JSON.parse(localStorage.getItem(key));
         if (pdata) {
           // 有值就赋值并且清空__default
-          x[key] = pdata;
           __default.length = 0;
+          x[key] = pdata;
         }
       })
     }
