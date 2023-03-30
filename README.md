@@ -47,7 +47,7 @@ This means that ee-vuex has the following **advantages**:
 - **v-model**: You can use global state directly with the v-model
 - **cache**: Computed cache can be used to improve get efficiency when attribute values remain unchanged
 
-Not only that, but there are more convenient and powerful aspects of ee-vuex. Please see [Definition Core](#Definition-Core) in detail
+Not only that, but there are more convenient and powerful aspects of ee-vuex. Please see [Definition Core](#definition-core) in detail
 
 
 ## Installation
@@ -58,17 +58,17 @@ npm install ee-vuex
 
 ## Usage
 Please understand the following 4 points before using ee-vuex
-1. [Create Store](#1-Create-Store)
-2. [Define State](#11-Store-Object)
-3. [Import Store](#21-Invoke-Store)
-4. [Invoke State](#22-Invoke-State)
+1. [Create Store](#1-create-store)
+2. [Define State](#11-store-object)
+3. [Import Store](#21-invoke-store)
+4. [Invoke State](#22-invoke-state)
 
 ### 1. Create Store
 Create a store using the createStore method, which receives 2 parameters
 
-1.1 [Store Object](#11-Store-Object): Multiple states can be defined
+1.1 [Store Object](#11-store-object): Multiple states can be defined
 
-1.2 [Store Name](#12-Store-Name): Specify a store name to import store
+1.2 [Store Name](#12-store-name): Specify a store name to import store
 
 - Global Store: The entire project is callable, which is a common use of ee-vuex
 ```
@@ -87,7 +87,8 @@ vue.use(createStore({
 vue.use(createStore({}, "$store2"))
 vue.use(createStore({}, "$store3"))
 
-// A non named warehouse requires you to save the store instance yourself. Calling vue.use(store) has no effect
+// A non named store requires you to save the store instance yourself.
+// Calling vue.use(store) has no effect
 const store = createStore({});
 ```
 
@@ -102,7 +103,8 @@ export default {
   name: "test",
   data() {
     return {
-      // At this point, the store is like the store name, and the store can be called through this.store
+      // At this point, the store is like the store name
+      // and the store can be called through this.store
       store: createStore({
         // Define states here
       })
@@ -116,17 +118,17 @@ export default {
 
 #### 1.1 Store Object
 Store object can define multiple states, and defining a state mainly includes the following four core contents
-- [Default Value](#1-Default-Value)
-- [Persistence](#2-Persistence)
-- [Get Function](#3-Get-Function)
-- [Set Function](#4-Set-Function)
+- [Default Value](#1-default-value)
+- [Persistence](#2-persistence)
+- [Get Function](#3-get-function)
+- [Set Function](#4-set-function)
 
-For details, please refer to [Definition Core](#Definition-Core)
+For details, please refer to [Definition Core](#definition-core)
 
 #### 1.2 Store Name
 Creating a store **does not have a store name by default**. You should give it a name for the global store.
 
-`createStore` can create **multiple store with different names**. For a named store, its instance can be obtained globally. For the method of obtaining it, please see [Call Store](#21-Call-Store). Only the store with the same name that was first created can obtain its instance globally.
+`createStore` can create **multiple store with different names**. For a named store, its instance can be obtained globally. For the method of obtaining it, please see [Call Store](#21-call-store). Only the store with the same name that was first created can obtain its instance globally.
 
 When creating multiple named stores, you can also globally import these stores in the following way
 ```
@@ -139,14 +141,15 @@ createStore({}, "b")
 createStore({}, "c")
 createStore({}, "d")
 
-// Directly importing the objects returned by ee-vuex by default allows you to use the a b c d store in the Vue component
+// Directly importing the objects returned by ee-vuex by default
+// allows you to use the a b c d store in the Vue component
 createApp({}).use(stores);
 ```
 
 
 ### 2. Use Store
 #### 2.1 Invoke Store
-For non named stores, you need to save the store instance yourself. For details, please refer to [Local Store of Create Store](#1-Create-Store).
+For non named stores, you need to save the store instance yourself. For details, please refer to [Local Store of Create Store](#1-create-store).
 
 For a named store, you can obtain its instance through the store name
 
@@ -156,7 +159,7 @@ import x from 'ee-vuex'
 const { $store1, $store2, $store3 } = x;
 ```
 
-- Obtain a store instance within the component (requires vue.use, refer to [Create Store](#1-Create-Store) and [Store Name](#12-Store-Name))
+- Obtain a store instance within the component (requires vue.use, refer to [Create Store](#1-create-store) and [Store Name](#12-store-name))
 ```
 // file test.vue
 <template>
@@ -180,7 +183,7 @@ export default {
 #### 2.2 Invoke State
 With the store instance, it is very simple to call the store states, just like calling a computed attribute.
 
-As you can see, the following example code is very simple. For more advantages of ee-vuex, please refer to [Advantages of ee-vuex](#3-Advantages-of-ee-vuex)
+As you can see, the following example code is very simple. For more advantages of ee-vuex, please refer to [Advantages of ee-vuex](#3-advantages-of-ee-vuex)
 
 (Assume that the following code exists in the global store $store, which contains the state state1.)
 - Template get
@@ -208,16 +211,16 @@ mounted() {
 ## Definition Core
 
 In the store definition of ee vuex, a state is an object that contains the following 4 fields
-- default: State's [(Default Value)](#1-Default-Value)
-- p: Automatically set and restore state values using localStorage[(Persistence)](#2-Persistence)
-- get: Triggered when obtaining state[(Get Function)](#3-Get-Function)
-- set: Triggered when assigning a status[(Set Function)](#4-Set-Function)
+- default: State's [(Default Value)](#1-default-value)
+- p: Automatically set and restore state values using localStorage[(Persistence)](#2-persistence)
+- get: Triggered when obtaining state[(Get Function)](#3-get-function)
+- set: Triggered when assigning a status[(Set Function)](#4-set-function)
 
 And when you only want to customize one of these fields, there will also be a corresponding **concise definition** method.
 
-For the benefits of defining states in this way, please refer to [Advantages of ee-vuex](#3-Advantages-of-ee-vuex)
+For the benefits of defining states in this way, please refer to [Advantages of ee-vuex](#3-advantages-of-ee-vuex)
 
-The following example code is written in the Create Store reference [Store Object](#1-Create-Store)
+The following example code is written in the Create Store reference [Store Object](#1-create-store)
 ```
 import { createStore } from 'ee-vuex'
 createStore({
@@ -228,7 +231,7 @@ createStore({
 ### 1. Default Value
 The common default values are easy to understand, just look at the following code examples.
 
-The default value of ee-vuex is very useful for asynchronous [caching enumerated data](#1-Use-Case).
+The default value of ee-vuex is very useful for asynchronous [caching enumerated data](#1-use-case).
 
 For example, our page supports multiple languages, and the type of language needs to be asynchronously obtained from the backend through the API. The data is an array.
 
@@ -269,17 +272,19 @@ key: "ee-vuex"
 key: new Date()
 ```
 
-- Function: You can use methods to return default values, and support asynchronous methods and Promises. Note: Please use arrow functions for concise definitions, otherwise they will be considered as [get function](#3-Get-Function) or [set function](#4-Set-Function).
+- Function: You can use methods to return default values, and support asynchronous methods and Promises. Note: Please use arrow functions for concise definitions, otherwise they will be considered as [get function](#3-get-function) or [set function](#4-set-function).
 ```
 // Direct return value: ee-vuex
 key: () => "ee-vuex"
-// Asynchronous Promise return value: undefined 2 seconds ago, ee-vuex 2 seconds later
+// Asynchronous Promise return value: 
+// undefined 2 seconds ago, ee-vuex 2 seconds later
 key: () => new Promise(resolve => {
   setTimeout(() => {
     resolve("ee-vuex")
   }, 2000)
 })
-// The async method asynchronously returns a value: undefined 2 seconds ago, 10000 after 2 seconds
+// The async method return value:
+// undefined 2 seconds ago, 10000 after 2 seconds
 key: async () => {
   // Get values asynchronously
   const value = await new Promise(
@@ -308,7 +313,8 @@ key: {
   // Contains default
   default: true,
 }
-// When you want to include objects with p, default, get, and set fields, you can use Function or do not use concise definitions.
+// When you want to include objects with p, default, get, and set fields
+// you can use Function or do not use concise definitions.
 // OK: Use Function to return a value. The default value is the object
 key: () => {
   return {
@@ -340,7 +346,9 @@ key: [[],
     }, 2000)
   }),
 ]
-// Note that when you want the default value to be an array, you need to nest the array or use a Function, whether it is a general definition or a concise definition
+// Note that when you want the default value to be an array
+// you need to nest the array or use a Function
+// whether it is a general definition or a concise definition
 // NG: The default value is 3
 key: [1, 2, 3]
 // OK: Multiple default values, using the first default value, default value []
@@ -358,7 +366,7 @@ Generally, we will save the state of the store to localStorage, read it out duri
 Persistence is a very common function for stores, so ee-vuex adds simple configurations to assist in implementation without having to implement persistence repeatedly.
 
 Using persistence requires attention:
-- Priority is given to reading the value of localStorage. If there is a value, [Default Value](#1-Default-Value) will be ignored
+- Priority is given to reading the value of localStorage. If there is a value, [Default Value](#1-default-value) will be ignored
 - The saved key is the name of the state, and modification is temporarily not supported. Please note that it does not have the same name as other localStorage content in your project
 
 <hr>
@@ -373,7 +381,7 @@ token: { p: 1 }
 token: localStorage
 ```
 
-- Custom Implementation: It can also be easily implemented using [Default Value](#1-Default-Value) and [Set Function](#4-Set-Function)
+- Custom Implementation: It can also be easily implemented using [Default Value](#1-default-value) and [Set Function](#4-set-function)
 ```
 token: {
   default: () => JSON.parse(localStorage.getItem('token')),
@@ -390,7 +398,7 @@ Like the Vue component computed get, it is a function. The ee-vuex get function 
 
 When Promise is returned, and Promise completes and returns a non null value, set will be called to set the return value to the status.
 
-This is useful when it is necessary to automatically and asynchronously obtain values during get, such as the [Login](#Login) example in actual combat.
+This is useful when it is necessary to automatically and asynchronously obtain values during get, such as the [Login](#login) example in actual combat.
 
 The difference from the default value is that the default value is only set once and does not change. However, in the case where the login example allows logout, the next time you log in to another account, you may need to retrieve the value asynchronously. At this time, it should be more convenient to use asynchronous get.
 
@@ -406,7 +414,7 @@ key: {
 }
 ```
 
-- Concise Definition: Note that the number of parameters should not be confused with [Set Function](#4-Set-Function), and that arrow functions should not be used to prevent confusion with [Default Value](#1-Default-Value)
+- Concise Definition: Note that the number of parameters should not be confused with [Set Function](#4-set-function), and that arrow functions should not be used to prevent confusion with [Default Value](#1-default-value)
 ```
 key() {}
 // OK: Parameter required, please write one more useless parameter
@@ -419,10 +427,14 @@ key: () => {}
 
 - Asynchronous: The return value of an asynchronous promise is directly set to the state, causing a state change. The computed cache becomes invalid. If it is a template reference state, the state will be obtained again. Therefore, it is important to use judgment to prevent multiple asynchronous values from causing a dead cycle
 ```
-// When obtaining a key after setting the token, an undefined value is returned 2 seconds ago, and the same value as the token is returned 2 seconds later
+// When obtaining a key after setting the token,
+// an undefined value is returned 2 seconds ago,
+// and the same value as the token is returned 2 seconds later
 token: undefined,
 async key(value, x) {
-  // Pay attention to adding judgment to assign values when there is no value, to prevent multiple asynchronous values
+  // Pay attention to adding judgment to assign values
+  // when there is no value,
+  // to prevent multiple asynchronous values
   if (this.token && !value) {
     return await new Promise(r => {
       setTimeout(() => {
@@ -452,7 +464,7 @@ mounted() {
   this.$store.key = 1;
 }
 ```
-- When the status has [Default Value](#1-Default-Value), the default value is assigned when getting. If you manually set the value before getting, the default value will be ignored during get to ensure that the value you set is not overwritten by the default value. However, if your default value contains asynchronism and is already executing, then set cannot stop the executing asynchronous operation, which may cause the asynchronous default value to overwrite your set value. Please try not to design the state in this way.
+- When the status has [Default Value](#1-default-value), the default value is assigned when getting. If you manually set the value before getting, the default value will be ignored during get to ensure that the value you set is not overwritten by the default value. However, if your default value contains asynchronism and is already executing, then set cannot stop the executing asynchronous operation, which may cause the asynchronous default value to overwrite your set value. Please try not to design the state in this way.
 ```
 // Define state
 key: [1, () => new Promise(r => {
@@ -464,22 +476,26 @@ key: [1, () => new Promise(r => {
 // Vue Component
 // Example 1: set before get
 mounted() {
-  // Set first, the value of key is 2, and the default value will no longer be valid
+  // Set first
+  // the value of key is 2, and the default value will no longer be valid
   this.$store.key = 2;
   console.log(this.$store.key); // output 2
-  // The default value is no longer valid, and the subsequent key values are consistently 2
+  // The default value is no longer valid,
+  // and the subsequent key values are consistently 2
   setTimeout(() => {
     console.log(this.$store.key); // output 2
   }, 3000)
 }
 // Example 2: get before set
 mounted() {
-  // Get first, the default value of 1 has been set, and Promise is already being executed
+  // Get first
+  // the default value of 1 has been set, and Promise is already being executed
   console.log(this.$store.key); // output 1
   // Set the key to 2
   this.$store.key = 2;
   console.log(this.$store.key); // output 2
-  // Promise is already executing, and set cannot be interrupted. After 2 seconds, the key will change to the asynchronous default value of 3
+  // Promise is already executing, and set cannot be interrupted.
+  // After 2 seconds, the key will change to the asynchronous default value of 3
   setTimeout(() => {
     console.log(this.$store.key); // output 3
   }, 3000)
@@ -530,9 +546,10 @@ key(value) {
 }
 ```
 
-- Asynchronous: Asynchronous is the same as the [Get Function](#3-Get-Function). Set asynchrony can be used, for example, when synchronous settings are required to the server. Using catch can prevent this assignment
+- Asynchronous: Asynchronous is the same as the [Get Function](#3-get-function). Set asynchrony can be used, for example, when synchronous settings are required to the server. Using catch can prevent this assignment
 ```
-// If Promise is successful, the local and server values will remain consistent. If Promise is incorrect, this assignment will fail.
+// If Promise is successful, the local and server values will remain consistent.
+// If Promise is incorrect, this assignment will fail.
 async lauguage(value) {
   await api.setLanguage(value);
   console.log("Successfully synchronized value with the server")
@@ -554,7 +571,9 @@ createStore({
         this.user = undefined;
     }
   },
-  // (get example)Login user information: Obtain from the background when there is no data, and return an empty object before obtaining
+  // (get example)Login user information:
+  // Obtain from the background when there is no data,
+  // and return an empty object before obtaining
   user(value, x) {
     if (!value && this.token)
       return api.getUser();
@@ -600,14 +619,18 @@ const store = createStore({
     },
     user(state) {
       if (!state.user && state.token) {
-        // Obtain user information through the background API, using setTimeout instead
-        // Problem 1. If the template references getters.user in multiple places, the asynchronous request will be triggered multiple times before the asynchronous request ends and the user is obtained
+        // Obtain user information through the API, using setTimeout instead
+        // Problem 1. If the template references getters.user in multiple places,
+        // the asynchronous request will be triggered multiple times
+        // before the asynchronous request ends and the user is obtained
         setTimeout(() => {
-          // Problem 2. Cannot use this in getters to point to the current instance of the store
+          // Problem 2. Cannot use this in getters
+          // to point to the current instance of the store
           store.commit('setUser', { name: 'UserName' })
         }, 5000)
       }
-      // Let the API return an empty object before obtaining user information to prevent empty references
+      // Let the API return an empty object
+      // before obtaining user information to prevent empty references
       return state.user || {};
     },
   },
@@ -625,7 +648,9 @@ const store = createStore({
     },
     setUser(state, user){
       state.user = user;
-      // Problem 3. Regardless of clearing token or user, the other state should be cleared together, but clearing each other can lead to a dead cycle
+      // Problem 3. Regardless of clearing token or user,
+      // the other state should be cleared together,
+      // but clearing each other can lead to a dead cycle
       if (!user)
         this.commit('setToken', undefined);
     },
@@ -662,22 +687,30 @@ export default createStore({
   user: {
     get(value) {
       if (!value) {
-        // Obtain user information through the background API, using setTimeout instead
-        // Comparison 1. If the template references a user in multiple places, only one asynchronous request will be triggered
-        // Because the user value has not changed, the computed feature returns the cached value of the user
+        // Obtain user information through the API, using setTimeout instead
+        // Comparison 1. If the template references a user in multiple places,
+        // only one asynchronous request will be triggered
+        // Because the user value has not changed,
+        // the computed feature returns the cached value of the user
         setTimeout(() => {
-          // Comparison 2. This can also be used in get to point to the current instance of the warehouse
+          // Comparison 2. This can also be used in get
+          // to point to the current instance of the store
           this.user = { name: 'UserName' };
         }, 5000)
       }
     },
     set(value) {
       if (!value) {
-        // Comparison 3. Regardless of clearing token or user, the other state should be cleared together, and mutual clearing will not lead to a dead cycle
-        // Because of the same value as set, the set method will not be triggered, similar to the Vue component's watch
+        // Comparison 3. Regardless of clearing token or user,
+        // the other state should be cleared together,
+        // and mutual clearing will not lead to a dead cycle
+        // Because of the same value as set,
+        // the set method will not be triggered,
+        // similar to the Vue component's watch
         if (!user)
           this.commit('setToken', undefined);
-        // Let the API return an empty object before obtaining user information to prevent empty references
+        // Let the API return an empty object
+        // before obtaining user information to prevent empty references
         return {};
       }
     }
