@@ -11,7 +11,9 @@
   },
   "keywords": [
     "vue",
-    "vuex"
+    "vuex",
+    "pinia",
+    "store"
   ],
   "author": "yamiwamiyu",
   "license": "MIT",
