@@ -18,7 +18,7 @@ ee代表了**封装(Encapsulated)** 和 **简单(Easy)**，让开发者的代码
 
 一个包含注册登录的完整应用一般都需要用到全局状态。
 
-ee-vuex也推荐在选项式API风格的Vue组件中定义仓库来替代data, computed, watch, 甚至是props，具体参考[data仓库](#2.2-data仓库)和[props仓库](#2.3-props仓库)
+ee-vuex也推荐在选项式API风格的Vue组件中定义仓库来替代data, computed, watch, 甚至是props，具体参考[data仓库](#22-data仓库)和[props仓库](#23-props仓库)
 
 ### 2. 为什么使用ee-vuex
 vue项目中一般使用Vuex或Pinia来管理全局状态，它们是vue官方推荐的，应用最广的两个全局状态管理库
@@ -221,9 +221,9 @@ const store = createStore({});
 
 看本章节，请先确保你已经了解以下几点
 - 了解选项式API的风格定义Vue组件
-- 了解ee-vuex的[基本用法](#1.-基本用法)
-- ee-vuex可以通过createStore创建[多个仓库](#2.1-多个仓库)
-- ee-vuex使用[面向对象的设计思路](#2.-为什么使用ee-vuex)来[定义仓库属性](#定义核心)
+- 了解ee-vuex的[基本用法](#1-基本用法)
+- ee-vuex可以通过createStore创建[多个仓库](#21-多个仓库)
+- ee-vuex使用[面向对象的设计思路](#2-为什么使用ee-vuex)来[定义仓库属性](#定义核心)
 
 局部仓库就是在Vue组件中创建仓库，用来代替 data, computed 和 watch
 ```
@@ -266,7 +266,7 @@ export default {
 ```
 
 #### 2.3 props仓库
-请先确保你已经看过并理解[data仓库](#2.2-data仓库)
+请先确保你已经看过并理解[data仓库](#22-data仓库)
 
 data仓库的例子中，props任然没有被封装进仓库。vue中的props是单向数据流，使用v-model时也可以认为它是双向的。对于面向对象来说，并没有像props一样外部可赋值内部只读的数据。无论外部和内部都可以对其赋值，且赋值效果应该是一致的
 

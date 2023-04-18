@@ -19,7 +19,7 @@ Global state is typically used for:
 
 A complete application that includes registration and login generally requires global state
 
-ee-vuex also recommends defining a store in the Vue component with an Options API style to replace data, computed, watch, and even props. Please refer to the [data Store](#2.2-data-store) and [props Store](#2.3-props-store) for details
+ee-vuex also recommends defining a store in the Vue component with an Options API style to replace data, computed, watch, and even props. Please refer to the [data Store](#22-data-store) and [props Store](#23-props-store) for details
 
 ### 2. Why use ee-vuex
 Vuex or Pinia are generally used in Vue projects to manage global states, which are the two most widely used global state management libraries recommended by Vue
@@ -224,9 +224,9 @@ It is recommended to skip this chapter first and read through [Define Core](#def
 
 Please ensure that you have understood the following points before reading this chapter
 - Understand the Options API
-- Understand the [Basic Usage](#1.-basic-usage) of ee-vuex
-- ee-vuex can create [Multiple Stores](#2.1-multiple-stores) through createStore
-- ee-vuex uses [Object-Oriented Design Approach](#2.-why-use-ee-vuex) to [Define Store States](#definition-core)
+- Understand the [Basic Usage](#1-basic-usage) of ee-vuex
+- ee-vuex can create [Multiple Stores](#21-multiple-stores) through createStore
+- ee-vuex uses [Object-Oriented Design Approach](#2-why-use-ee-vuex) to [Define Store States](#definition-core)
 
 Local stores are created in Vue components to replace data, computed, and watch
 ```
@@ -270,7 +270,7 @@ export default {
 ```
 
 #### 2.3 props Store
-Please ensure that you have read and understood the [data Store](#2.2-data-store)
+Please ensure that you have read and understood the [data Store](#22-data-store)
 
 In the example of a data store, props are still not encapsulated into the store. The props in Vue are unidirectional data streams, and when using the v-model, it can also be considered bidirectional. For object-oriented applications, there is no externally assignable and internally read-only data like props. Both external and internal values can be assigned, and the assignment effect should be consistent
 
@@ -359,9 +359,9 @@ In the store definition of ee vuex, a state is an object that contains the follo
 
 And when you only want to customize one of these fields, there will also be a corresponding **concise definition** method.
 
-For the benefits of defining states in this way, please refer to [Advantages of ee-vuex](#2.-why-use-ee-vuex)
+For the benefits of defining states in this way, please refer to [Advantages of ee-vuex](#2-why-use-ee-vuex)
 
-The following example code is written in the Create Store reference [Basic Usage](#1.-basic-usage)
+The following example code is written in the Create Store reference [Basic Usage](#1-basic-usage)
 ```
 import { createStore } from 'ee-vuex'
 createStore({
