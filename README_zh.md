@@ -1,8 +1,6 @@
 # ee-vuex
+ee-vuex 是 Vue3 的全局状态管理器，它允许跨组件/页面共享状态。
 
-更**简单**更**方便**的Vue3项目全局状态管理器。
-
-## 介绍
 ee代表了**封装(Encapsulated)** 和 **简单(Easy)**，让开发者的代码更简洁。
 
 ### 1. 使用场景
@@ -18,36 +16,78 @@ ee代表了**封装(Encapsulated)** 和 **简单(Easy)**，让开发者的代码
   - 省市级联
   - 支持的语言
 
-### 2. 方案和对比
-vue项目中一般使用vuex和pinia来管理全局状态，请先通过下面表格看一下vuex的核心概念和ee-vuex的对比。
+一个包含注册登录的完整应用一般都需要用到全局状态。
+
+ee-vuex也推荐在选项式API风格的Vue组件中定义仓库来替代data, computed, watch, 甚至是props，具体参考[data仓库](#2.2-data仓库)和[props仓库](#2.3-props仓库)
+
+### 2. 为什么使用ee-vuex
+vue项目中一般使用Vuex或Pinia来管理全局状态，它们是vue官方推荐的，应用最广的两个全局状态管理库
 - vuex可以参考其官方文档 https://vuex.vuejs.org/zh/
 - pinia可以参考其官方文档 https://pinia.web3doc.top/core-concepts/
+
+Vuex是最先推出的库，Vue3出现后，Pinia逐渐在取代Vuex
+
+Pinia和Vuex的比较，可以参考Pinia的官方文档 https://pinia.web3doc.top/introduction.html#%E4%B8%8E-vuex-%E7%9A%84%E6%AF%94%E8%BE%83
+
+Vuex和Pinia在定义仓库时，都包含了 State, Getter, Action 3个核心概念，这些概念等同于组件中的 data, computed 和 method
+
+ee-vuex简化或者说统一了这些核心概念，ee-vuex的核心有且仅有[属性](#定义核心)
+
+后端使用过ORM或使用过 C#, Java 等面向对象的编程语言的程序员，应该都清楚我们在定义封装类型时，一般只有
+
+- 属性：用于读取/保存数据，等同于computed的get和set，和一个仅组件内部可见的data变量
+```
+public partial class People
+{
+  private string name;
+  private int age;
+
+  public string Name
+  {
+    get { return name; }
+    set { name = value; }
+  }
+
+  public int Age
+  {
+    get { return age; }
+    set { age = value; }
+  }
+}
+```
+
+- 方法：用于操作数据，等同于methods
+```
+public partial class People
+{
+  public void Grow()
+  {
+    this.Age++;
+  }
+}
+```
+
+vue定义组件跟面向对象定义类型很像，ee-vuex正是采用面向对象的设计思路，使用Vue3新推出的 ref, reactive, computed 来定义仓库和属性，这跟Vuex和Pinia甚至是Vue本身的设计思路上就是不同的
+
+ee-vuex这么做有以下**优势**：
+- 定义更**清晰简洁**：一个状态就是一个对象，而不用分别定义到 state, getters 和 actions 等多个对象里
+- 使用更**简单方便**：不需要 mapGetters, mapState 等方法来将仓库的内容映射到组件中，也不需要commit，dispatch等来调用方法和赋值，直接调用和赋值状态即可
+- **v-model**：可以将全局状态直接用于v-model
+- **缓存**：属性值不变时可以利用computed的缓存提高get效率
+
+不仅这样，ee-vuex还有更多方便和强大的地方，请详细看[定义核心](#定义核心)
+
+可以通过下面表格先看一下Vuex的核心概念和ee-vuex的对比，或直接参考[使用说明](#使用说明)来一览ee-vuex的用法
 
 ||vuex|ee-vuex(computed形式)|
 |-|-|-|
 state|- **定义**<br>state:&nbsp;{<br>&nbsp;&nbsp;key:&nbsp;value,<br>}<br>-&nbsp;**调用**<br>\\$store.state.key|- **定义**<br>key:&nbsp;value<br>-&nbsp;**调用**<br>\\$store.key|
 getters|- **定义**<br>getters:&nbsp;{<br>&nbsp;&nbsp;key(state)&nbsp;{<br>&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;state.key<br>&nbsp;&nbsp;}<br>}<br>-&nbsp;**调用**<br>\\$store.getters.key|- **定义**<br>key()&nbsp;{}<br>-&nbsp;**调用**<br>\\$store.key|
 mutations|- **定义**<br>mutations:&nbsp;{<br>&nbsp;&nbsp;key(state,&nbsp;value)&nbsp;{<br>&nbsp;&nbsp;&nbsp;&nbsp;state.key&nbsp;=&nbsp;value&nbsp;*&nbsp;2<br>&nbsp;&nbsp;}<br>}<br>-&nbsp;**调用**<br>\\$store.commit("key",&nbsp;value)|- **定义**<br>key(value)&nbsp;{&nbsp;<br>&nbsp;&nbsp;return&nbsp;value&nbsp;*&nbsp;2&nbsp;<br>}<br>-&nbsp;**调用**<br>\\$store.key&nbsp;=&nbsp;value|
-actions|- **定义**<br>actions:&nbsp;{<br>&nbsp;&nbsp;async&nbsp;key({commit},&nbsp;value)&nbsp;{<br>&nbsp;&nbsp;&nbsp;&nbsp;await&nbsp;new&nbsp;Promise(r&nbsp;=>&nbsp;{<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;setTimeout(()&nbsp;=>&nbsp;r(),&nbsp;1000)<br>&nbsp;&nbsp;&nbsp;&nbsp;})<br>&nbsp;&nbsp;&nbsp;&nbsp;commit("key",&nbsp;value)<br>&nbsp;&nbsp;}<br>}<br>-&nbsp;**调用**<br>\\$store.dispatch("key",&nbsp;value)|- **定义**<br>async&nbsp;key(value)&nbsp;{<br>&nbsp;&nbsp;await&nbsp;new&nbsp;Promise(r&nbsp;=>&nbsp;{<br>&nbsp;&nbsp;&nbsp;&nbsp;setTimeout(()&nbsp;=>&nbsp;r(value)<br>&nbsp;&nbsp;&nbsp;&nbsp;,&nbsp;1000)<br>&nbsp;&nbsp;})<br>}<br>-&nbsp;**调用**<br>\\$store.key&nbsp;=&nbsp;value|
-module|- **定义**<br>const&nbsp;a&nbsp;=&nbsp;{<br>&nbsp;&nbsp;state:&nbsp;{&nbsp;key:&nbsp;'a'&nbsp;}<br>}<br>const&nbsp;b&nbsp;=&nbsp;{<br>&nbsp;&nbsp;state:&nbsp;{&nbsp;key:&nbsp;'b'&nbsp;}<br>}<br>createStore({<br>&nbsp;&nbsp;modules:&nbsp;{<br>&nbsp;&nbsp;&nbsp;&nbsp;a:&nbsp;moduleA,<br>&nbsp;&nbsp;&nbsp;&nbsp;b:&nbsp;moduleB<br>&nbsp;&nbsp;}<br>})<br>-&nbsp;**调用**<br>\\$store.state.a.key<br>\\$store.state.b.key|- **定义**<br>createStore({<br>&nbsp;&nbsp;key:&nbsp;'a'<br>},&nbsp;'\\$a')<br>createStore({<br>&nbsp;&nbsp;key:&nbsp;'b'<br>},&nbsp;'\\$b')<br>-&nbsp;**调用**<br>\\$a.key<br>\\$b.key|
+actions|- **定义**<br>actions:&nbsp;{<br>&nbsp;&nbsp;async&nbsp;key({commit},&nbsp;value)&nbsp;{<br>&nbsp;&nbsp;&nbsp;&nbsp;await&nbsp;new&nbsp;Promise(r&nbsp;=>&nbsp;{<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;setTimeout(()&nbsp;=>&nbsp;r(),&nbsp;1000)<br>&nbsp;&nbsp;&nbsp;&nbsp;})<br>&nbsp;&nbsp;&nbsp;&nbsp;commit("key",&nbsp;value)<br>&nbsp;&nbsp;}<br>}<br>-&nbsp;**调用**<br>\\$store.dispatch("key",&nbsp;value)|- **定义**<br>async&nbsp;key(value)&nbsp;{<br>&nbsp;&nbsp;return&nbsp;await&nbsp;new&nbsp;Promise(r&nbsp;=>&nbsp;{<br>&nbsp;&nbsp;&nbsp;&nbsp;setTimeout(()&nbsp;=>&nbsp;r(value)<br>&nbsp;&nbsp;&nbsp;&nbsp;,&nbsp;1000)<br>&nbsp;&nbsp;})<br>}<br>-&nbsp;**调用**<br>\\$store.key&nbsp;=&nbsp;value|
+module|- **定义**<br>const&nbsp;moduleA&nbsp;=&nbsp;{<br>&nbsp;&nbsp;state:&nbsp;{&nbsp;key:&nbsp;'a'&nbsp;}<br>}<br>const&nbsp;moduleB&nbsp;=&nbsp;{<br>&nbsp;&nbsp;state:&nbsp;{&nbsp;key:&nbsp;'b'&nbsp;}<br>}<br>createStore({<br>&nbsp;&nbsp;modules:&nbsp;{<br>&nbsp;&nbsp;&nbsp;&nbsp;a:&nbsp;moduleA,<br>&nbsp;&nbsp;&nbsp;&nbsp;b:&nbsp;moduleB<br>&nbsp;&nbsp;}<br>})<br>-&nbsp;**调用**<br>\\$store.state.a.key<br>\\$store.state.b.key|- **定义**<br>createStore({<br>&nbsp;&nbsp;key:&nbsp;'a'<br>},&nbsp;'\\$a')<br>createStore({<br>&nbsp;&nbsp;key:&nbsp;'b'<br>},&nbsp;'\\$b')<br>-&nbsp;**调用**<br>\\$a.key<br>\\$b.key|
 v-model|- **定义**<br>createStore({<br>&nbsp;&nbsp;state:&nbsp;{&nbsp;key:&nbsp;undefined&nbsp;},<br>&nbsp;&nbsp;mutations:&nbsp;{<br>&nbsp;&nbsp;&nbsp;&nbsp;key(state,&nbsp;value)&nbsp;{<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;state.key&nbsp;=&nbsp;value<br>&nbsp;&nbsp;&nbsp;&nbsp;}<br>&nbsp;&nbsp;}<br>})<br>-&nbsp;**调用**<br><template><br>&nbsp;&nbsp;<input&nbsp;type="text"&nbsp;v-model="key"&nbsp;/><br></template><br>...<br>computed:&nbsp;{<br>&nbsp;&nbsp;key:&nbsp;{<br>&nbsp;&nbsp;&nbsp;&nbsp;get&nbsp;()&nbsp;{<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;this.\\$store.state.key<br>&nbsp;&nbsp;&nbsp;&nbsp;},<br>&nbsp;&nbsp;&nbsp;&nbsp;set&nbsp;(value)&nbsp;{<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;this.\\$store.commit('key',&nbsp;value)<br>&nbsp;&nbsp;&nbsp;&nbsp;}<br>&nbsp;&nbsp;}<br>}<br>|- **定义**<br>createStore({<br>&nbsp;&nbsp;key:&nbsp;undefined<br>},&nbsp;'\\$store')<br>-&nbsp;**调用**<br><template><br>&nbsp;&nbsp;<input&nbsp;type="text"&nbsp;v-model="\\$store.key"&nbsp;/><br></template><br>...|
 localStorage|- **定义**<br>createStore({<br>&nbsp;&nbsp;state:&nbsp;{&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;key:&nbsp;JSON.parse(<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;localStorage.getItem('key'))<br>&nbsp;&nbsp;},<br>&nbsp;&nbsp;mutations:&nbsp;{<br>&nbsp;&nbsp;&nbsp;&nbsp;key(state,&nbsp;value)&nbsp;{<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;state.key&nbsp;=&nbsp;value<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;localStorage.setItem('key',&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;JSON.stringify(value))<br>&nbsp;&nbsp;&nbsp;&nbsp;}<br>&nbsp;&nbsp;}<br>})|- **定义**<br>createStore({&nbsp;key:&nbsp;{&nbsp;p:&nbsp;1,&nbsp;}&nbsp;})|
-
-### 3. ee-vuex的优势
-无论是vuex，pinia，定义一个全局状态的核心都包括
-1. state：相当于Vue组件的data
-2. getters：相当于Vue组件的computed的get
-3. mutations(vuex) actions(pinia)：相当于Vue组件的computed的set或一个method，主要用于对state进行赋值
-
-ee-vuex则没有区分这些，ee-vuex使用的Vue组件computed的形式来定义和调用状态
-
-这意味着ee-vuex有以下的**优势**：
-- 定义更**清晰简洁**：一个状态就是一个对象，而不用分别定义到state和getters等多个对象里
-- 使用更**简单方便**：不需要commit，dispatch等多余的方法，直接调用和赋值状态即可
-- **v-model**：可以将全局状态直接用于v-model
-- **缓存**：属性值不变时可以利用computed的缓存提高get效率
-
-不仅这样，ee-vuex还有更多方便和强大的地方，请详细看[定义核心](#定义核心)
 
 
 ## 安装教程
@@ -57,155 +97,253 @@ npm install ee-vuex
 ```
 
 ## 使用说明
-使用ee-vuex请先了解以下4点
-1. [创建仓库](#1-创建仓库)
-2. [定义状态](#11-仓库对象)
-3. [引入仓库](#21-调用仓库)
-4. [调用状态](#22-调用仓库状态)
 
-### 1. 创建仓库
-创建仓库使用createStore方法，方法接收2个参数
+### 1. 基本用法
 
-1.1 [仓库对象](#11-仓库对象)：可以定义多个状态
+这里使用Vuex和Pinia都有的计数器的例子
+```
+// stores/counter.js
+import { createStore } from 'ee-vuex'
 
-1.2 [仓库名](#12-仓库名)：指定仓库名字方便全局引用
+export default createStore({
+  count: 1,
+}, "$ee")
+```
 
-- 全局仓库：整个项目可调用，这是使用ee-vuex的一般用法
+定义完仓库，然后在一个组件中使用它
+```
+// 引入仓库实例
+// import $ee from '@/stores/counter'
+// 或者
+// import eeVuex from 'ee-vuex'
+// const { $ee } = eeVuex // 或者 const $ee = eeVuex.$ee
+// 或者(推荐使用)
+const { $ee } = require('ee-vuex').default
+
+export default {
+  setup() {
+    console.log($ee.count) // -> 1
+    $ee.count++
+    console.log($ee.count) // -> 2
+    // 返回仓库实例以在模板中使用它
+    return { $ee }
+  },
+}
+```
+
+选项式API的风格使用仓库更容易。可以在入口向vue实例全局注册仓库，就不用每个组件重复导入仓库了
+```
+// main.js
+import { createApp } from 'vue'
+import $ee from './stores/counter.js'
+
+createApp({ /* 组件 */ })
+  // 全局注册仓库
+  .use($ee)
+  .mount('#app')
+```
+
+在选项式API定义的组件中使用全局注册的仓库
+```
+export default {
+  mounted() {
+    console.log(this.$ee);
+  }
+}
+```
+
+在模板中使用全局状态也非常简单
+```
+<template>
+  <div @click="$ee.count++">{{ $ee.count }}</div>
+  <input v-model="$ee.count" />
+</template>
+```
+
+### 2. 高级用法
+
+createStore的第二个参数可以让ee-vuex创建的仓库具有更多高级的用法
+```
+import { createStore } from 'ee-vuex'
+
+// 可以直接是个字符串代表仓库名字
+export default createStore({}, "$ee")
+
+// 或者是一个对象，更详细的定义仓库的特殊用法
+export default createStore({}, 
+{
+  name: "$ee",
+  this: undefined,
+  set(key, value, store) { },
+})
+```
+- name: 仓库的名字
+- this: 调用get/set/default方法时的this指向，默认指向仓库实例
+- set: 一个属性赋值后的回调
+
+这些配置的具体用法请看下面的示例
+
+#### 2.1 多个仓库
+- 仓库名可以区分仓库的实例
+- 可以通过ee-vuex返回的默认对象一次性注册所有命名仓库
 ```
 import { createApp } from 'vue'
-import { createStore } from 'ee-vuex'
+import ee, { createStore } from 'ee-vuex'
 
 const vue = createApp({ /* 组件 */ });
 
-vue.use(createStore({
-  // 这里定义状态
-},
-// 仓库的名字
-"$store"))
+// 逐个创建和注册仓库
+// vue.use(createStore({}, "$store1"))
+// vue.use(createStore({}, "$store2"))
+// vue.use(createStore({}, "$store3"))
 
-// 多个仓库
-vue.use(createStore({}, "$store2"))
-vue.use(createStore({}, "$store3"))
+// 逐个创建仓库，一次性注册所有命名仓库（推荐用法）
+createStore({}, "$store1")
+createStore({}, "$store2")
+createStore({}, "$store3")
+vue.use(ee);
 
 // 非命名仓库，需要自己保存store实例，调用vue.use(store)无任何效果
 const store = createStore({});
 ```
 
-- 局部仓库：单个组件可调用，局部仓库可以用来代替组件的data，computed，watch使用
+在Vue组件中就可以通过仓库名获取仓库的实例
 ```
-// file test.vue
-<template></template>
-
-<script type="text/javascript">
-import { createStore } from 'ee-vuex'
-export default {
-  name: "test",
-  data() {
-    return {
-      // 此时store就像仓库名，通过this.store就可以调用仓库
-      store: createStore({
-        // 定义你的仓库
-      })
-    }
-  },
-}
-</script>
-
-<style></style>
-```
-
-#### 1.1 仓库对象
-仓库对象可以定义多个状态，定义一个状态主要包含下面4个核心内容
-- [默认值](#1-默认值)
-- [是否持久化](#2-是否持久化)
-- [get函数](#3-get函数)
-- [set函数](#4-set函数)
-
-定义状态具体请参考[定义核心](#定义核心)
-
-#### 1.2 仓库名
-创建仓库**默认没有仓库名**，全局仓库你应该给它起个名字。
-
-createStore可以创建**多个不同命名**的仓库，对于命名的仓库可以全局获得其实例，获取方式请查看[调用仓库](#21-调用仓库)，同名仓库只有最先创建的那个可以全局获得其实例。
-
-创建多个命名仓库时，也可以通过下面方式**一次性全局导入**这些仓库
-```
-import { createApp } from 'vue'
-import stores, { createStore } from 'ee-vuex'
-
-// 创建多个仓库
-createStore({}, "a")
-createStore({}, "b")
-createStore({}, "c")
-createStore({}, "d")
-
-// 直接导入ee-vuex默认返回的对象就可以在Vue组件中使用a b c d仓库了
-createApp({}).use(stores);
-```
-
-
-### 2. 使用仓库
-#### 2.1 调用仓库
-对于非命名仓库，需要自己保存仓库实例，可参考[创建仓库的局部仓库](#1-创建仓库)。
-
-对于命名仓库，可以通过仓库名获取其实例
-
-- JS引入全局仓库实例(不需要vue.use)
-```
-import x from 'ee-vuex'
-// $store1, $store2, $store3为createStore时传入的仓库名
-const { $store1, $store2, $store3 } = x;
-```
-
-- 组件内获得仓库实例(需要vue.use，参考[创建仓库](#1-创建仓库)和[仓库名](#12-仓库名))
-```
-// file test.vue
-// $store1, $store2, $store3为createStore时传入的仓库名
 <template>
-  <!-- 模板中直接使用[仓库名]获得仓库实例 -->
   <div>{{ $store1 }}</div>
   <div>{{ $store2 }}</div>
   <div>{{ $store3 }}</div>
 </template>
+```
 
-<script type="text/javascript">
+#### 2.2 data仓库
+建议先跳过这个章节，先看完[定义核心](#定义核心)，了解ee-vuex定义属性的便利性后再回到这里
+
+看本章节，请先确保你已经了解以下几点
+- 了解选项式API的风格定义Vue组件
+- 了解ee-vuex的[基本用法](#1.-基本用法)
+- ee-vuex可以通过createStore创建[多个仓库](#2.1-多个仓库)
+- ee-vuex使用[面向对象的设计思路](#2.-为什么使用ee-vuex)来[定义仓库属性](#定义核心)
+
+局部仓库就是在Vue组件中创建仓库，用来代替 data, computed 和 watch
+```
+import { createStore } from 'ee-vuex'
+
 export default {
-  name: "test",
-  mounted() {
-    // JS中使用this.[仓库名]获得仓库实例
-    this.$store1 || this.$store2 || this.$store3
+  data() {
+    // 跟全局仓库一样的使用
+    // 使用示例 this.$ee.count
+    return { 
+      $ee: createStore({ 
+        count: {
+          default: this.modelValue,
+          set(value) {
+            // 目的让仓库的状态值和props的值同步
+            this.$emit("update:modelValue", value);
+          }
+        }
+      },
+      {
+        // 局部仓库不需要设定仓库名
+        // 局部仓库this应该指向Vue组件的实例
+        this: this
+      })
+    }
+
+    // 不需要仓库实例，仓库实例就是组件实例
+    // 使用示例 this.count ，比起上面的使用方法可以不再需要$ee仓库实例
+    // return createStore({ ... }, { ... })
+  },
+  props: ['modelValue'],
+  watch: {
+    // ee-vuex仓库仅能替代data和computed，对于props的变化还是需要watch
+    modelValue(value) {
+      // 目的让仓库的状态值和props的值同步
+      this.$ee.count = value;
+    }
+  }
+}
+```
+
+#### 2.3 props仓库
+请先确保你已经看过并理解[data仓库](#2.2-data仓库)
+
+data仓库的例子中，props任然没有被封装进仓库。vue中的props是单向数据流，使用v-model时也可以认为它是双向的。对于面向对象来说，并没有像props一样外部可赋值内部只读的数据。无论外部和内部都可以对其赋值，且赋值效果应该是一致的
+
+本例子就是使用injectStore来将props一并封装起来，使其符合面向对象的设计原则
+```
+// hello-ee-vuex.vue
+// 引入injectStore
+import { injectStore } from 'ee-vuex'
+
+// 导出组件调用injectStore
+export default injectStore({
+  props: {
+    count: {
+      // 定义props可以使用ee-vuex和原本props两种定义方式
+      // ee-vuex: get, set, p, default
+      // props: type, required, validator, default
+      type: Number,
+      // 因为default两种方式都有，两种方式的default都会生效
+      default: 0,
+    },
+  },
+})
+```
+props既可以使用原本props的定义方式，也可以使用ee-vuex中的[定义方式](#定义核心)
+
+此时props是 **可读写的** **双向的**，使用方法如下
+
+- 组件内部：props变为可写的，可以直接对其赋值
+```
+<!-- 模板中可以直接赋值 --> 
+<template>
+  <p @click="count++">{{ count }}</p>
+  <input v-model="count" />
+</template>
+
+...
+
+// JavaScript中也可以直接赋值
+mounted() {
+  this.count = 5;
+}
+```
+
+- 组件外部：和原来一样使用
+```
+<template>
+  <hello-ee-vuex v-model="myCount" @click="myCount++" />
+  <p>{{ myCount }}</p>
+</template>
+
+<script>
+export default {
+  data() {
+    myCount: 5,
   }
 }
 </script>
 ```
 
-#### 2.2 调用仓库状态
-有了仓库实例后，调用仓库的状态非常简单，就像调用一个computed的属性一样。
+此时，内部组件的p和input，外部组件的p将同步显示一样的数据。且内部组件和外部组件点击p标签，两个组件都能看到数据自增
 
-可以看到下面示例代码非常简单，ee-vuex的更多优势请参考[ee-vuex的优势](#3-ee-vuex的优势)
+#### 2.4 set
+set可以将仓库所有状态的赋值操作记录到日志中
+```
+import { createStore } from 'ee-vuex'
 
-(假设下面代码存在全局仓库$store，仓库包含状态state1)
-- 模板 get
+export default createStore({
+  count: 0,
+  name: 'Hello World',
+}, {
+  set(key, value, store) {
+    // count -> 0
+    // name -> Hello World
+    console.log(key, " -> ", value);
+  }
+})
 ```
-<div>{{ $store.state1 }}</div>
-```
-- JS get
-```
-mounted() {
-  const state1 = this.$store.state1;
-}
-```
-- 模板 set
-```
-<input type="text" v-model="$store.state1" />
-```
-- JS set
-```
-mounted() {
-  this.$store.state1 = "text value";
-}
-```
-
 
 ## 定义核心
 
@@ -217,9 +355,9 @@ mounted() {
 
 且当你仅想自定义其中一个字段时，还会有相应的**简洁定义**方法。
 
-这样定义状态的好处请参考[ee-vuex的优势](#3-ee-vuex的优势)
+这样定义状态的好处请参考[为什么使用ee-vuex](#2-为什么使用ee-vuex)
 
-后面的示例代码都写在创建仓库里面，创建仓库参考[仓库对象](#1-创建仓库)
+后面的示例代码都写在创建仓库里面，创建仓库参考[基本用法](#1-基本用法)
 ```
 import { createStore } from 'ee-vuex'
 createStore({

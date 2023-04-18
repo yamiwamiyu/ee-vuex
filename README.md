@@ -1,8 +1,7 @@
 # ee-vuex
 
-A more **simple** more **convenient** Vue3 project global state manager.
+ee-vuex is the global state manager for Vue3, which allows for shared state across components/pages.
 
-## Introduction
 "ee" represents **Encapsulated** and **Easy**, making developers' code more concise.
 
 ### 1. Use Case
@@ -18,36 +17,77 @@ Global state is typically used for:
   - Fixed drop-down options
   - Supported Languages
 
-### 2. Scheme and Comparison
-In a vue project, vuex and pinia are commonly used to manage global state. Please first compare the core concepts of vuex and ee-vuex through the following table.
+A complete application that includes registration and login generally requires global state
+
+ee-vuex also recommends defining a store in the Vue component with an Options API style to replace data, computed, watch, and even props. Please refer to the [data Store](#2.2-data-store) and [props Store](#2.3-props-store) for details
+
+### 2. Why use ee-vuex
+Vuex or Pinia are generally used in Vue projects to manage global states, which are the two most widely used global state management libraries recommended by Vue
 - vuex: https://vuex.vuejs.org/
 - pinia: https://pinia.web3doc.top/core-concepts/
+
+Vuex was the first library to be launched, and after the emergence of Vue3, Pinia gradually replaced Vuex
+
+For a comparison between Pinia and Vuex, please refer to Pinia's official documentation https://pinia.web3doc.top/introduction.html#%E4%B8%8E-vuex-%E7%9A%84%E6%AF%94%E8%BE%83
+
+When defining stores, Vuex and Pinia both include three core concepts: State, Getter, and Action, which are equivalent to data, computed, and method in components
+
+ee-vuex simplifies or unifies these core concepts, and the core of ee-vuex has and only has [properties](#definition-core)
+
+Programmers who have used ORM or OOP languages such as C# and Java should be aware that when defining encapsulation types, we typically only
+- Property: used to get/set data, equivalent to computed get and set, and a data variable that is only visible within the component
+```
+public partial class People
+{
+  private string name;
+  private int age;
+
+  public string Name
+  {
+    get { return name; }
+    set { name = value; }
+  }
+
+  public int Age
+  {
+    get { return age; }
+    set { age = value; }
+  }
+}
+```
+
+- Method: used to manipulate data, equivalent to methods
+```
+public partial class People
+{
+  public void Grow()
+  {
+    this.Age++;
+  }
+}
+```
+
+Vue defines components much like object-oriented definition types. ee-vuex adopts an object-oriented design approach, using Vue3's newly introduced ref, reactive, and computed methods to define stores and states. This is different from Vuex, Pinia, and even Vue's own design approach
+
+ee-vuex has the following **advantages**:
+- More **clear and concise definition**: A state is an object, rather than being defined in multiple objects such as state and getters
+- More **simple and convenient to use**: No need for methods such as mapGetters and mapState, no need for methods such as commit and dispatch, just call and assign states directly
+- **v-model**: You can use global state directly with the v-model
+- **cache**: Computed cache can be used to improve get efficiency when attribute values remain unchanged
+
+Not only that, but there are more convenient and powerful aspects of ee-vuex. Please see [Definition Core](#definition-core) in detail
+
+You can first compare the core concepts of Vuex with ee-vuex through the table below, or directly refer to [Usage](#usage) to list the usage of ee-vuex
 
 ||vuex|ee-vuex(computed)|
 |-|-|-|
 state|- **Definition**<br>state:&nbsp;{<br>&nbsp;&nbsp;key:&nbsp;value,<br>}<br>-&nbsp;**Invoke**<br>\$store.state.key|- **Definition**<br>key:&nbsp;value<br>-&nbsp;**Invoke**<br>\$store.key|
 getters|- **Definition**<br>getters:&nbsp;{<br>&nbsp;&nbsp;key(state)&nbsp;{<br>&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;state.key<br>&nbsp;&nbsp;}<br>}<br>-&nbsp;**Invoke**<br>\$store.getters.key|- **Definition**<br>key()&nbsp;{}<br>-&nbsp;**Invoke**<br>\$store.key|
 mutations|- **Definition**<br>mutations:&nbsp;{<br>&nbsp;&nbsp;key(state,&nbsp;value)&nbsp;{<br>&nbsp;&nbsp;&nbsp;&nbsp;state.key&nbsp;=&nbsp;value&nbsp;*&nbsp;2<br>&nbsp;&nbsp;}<br>}<br>-&nbsp;**Invoke**<br>\$store.commit("key",&nbsp;value)|- **Definition**<br>key(value)&nbsp;{&nbsp;<br>&nbsp;&nbsp;return&nbsp;value&nbsp;*&nbsp;2&nbsp;<br>}<br>-&nbsp;**Invoke**<br>\$store.key&nbsp;=&nbsp;value|
-actions|- **Definition**<br>actions:&nbsp;{<br>&nbsp;&nbsp;async&nbsp;key({commit},&nbsp;value)&nbsp;{<br>&nbsp;&nbsp;&nbsp;&nbsp;await&nbsp;new&nbsp;Promise(r&nbsp;=>&nbsp;{<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;setTimeout(()&nbsp;=>&nbsp;r(),&nbsp;1000)<br>&nbsp;&nbsp;&nbsp;&nbsp;})<br>&nbsp;&nbsp;&nbsp;&nbsp;commit("key",&nbsp;value)<br>&nbsp;&nbsp;}<br>}<br>-&nbsp;**Invoke**<br>\$store.dispatch("key",&nbsp;value)|- **Definition**<br>async&nbsp;key(value)&nbsp;{<br>&nbsp;&nbsp;await&nbsp;new&nbsp;Promise(r&nbsp;=>&nbsp;{<br>&nbsp;&nbsp;&nbsp;&nbsp;setTimeout(()&nbsp;=>&nbsp;r(value)<br>&nbsp;&nbsp;&nbsp;&nbsp;,&nbsp;1000)<br>&nbsp;&nbsp;})<br>}<br>-&nbsp;**Invoke**<br>\$store.key&nbsp;=&nbsp;value|
-module|- **Definition**<br>const&nbsp;a&nbsp;=&nbsp;{<br>&nbsp;&nbsp;state:&nbsp;{&nbsp;key:&nbsp;'a'&nbsp;}<br>}<br>const&nbsp;b&nbsp;=&nbsp;{<br>&nbsp;&nbsp;state:&nbsp;{&nbsp;key:&nbsp;'b'&nbsp;}<br>}<br>createStore({<br>&nbsp;&nbsp;modules:&nbsp;{<br>&nbsp;&nbsp;&nbsp;&nbsp;a:&nbsp;moduleA,<br>&nbsp;&nbsp;&nbsp;&nbsp;b:&nbsp;moduleB<br>&nbsp;&nbsp;}<br>})<br>-&nbsp;**Invoke**<br>\$store.state.a.key<br>\$store.state.b.key|- **Definition**<br>createStore({<br>&nbsp;&nbsp;key:&nbsp;'a'<br>},&nbsp;'\$a')<br>createStore({<br>&nbsp;&nbsp;key:&nbsp;'b'<br>},&nbsp;'\$b')<br>-&nbsp;**Invoke**<br>\$a.key<br>\$b.key|
+actions|- **Definition**<br>actions:&nbsp;{<br>&nbsp;&nbsp;async&nbsp;key({commit},&nbsp;value)&nbsp;{<br>&nbsp;&nbsp;&nbsp;&nbsp;await&nbsp;new&nbsp;Promise(r&nbsp;=>&nbsp;{<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;setTimeout(()&nbsp;=>&nbsp;r(),&nbsp;1000)<br>&nbsp;&nbsp;&nbsp;&nbsp;})<br>&nbsp;&nbsp;&nbsp;&nbsp;commit("key",&nbsp;value)<br>&nbsp;&nbsp;}<br>}<br>-&nbsp;**Invoke**<br>\$store.dispatch("key",&nbsp;value)|- **Definition**<br>async&nbsp;key(value)&nbsp;{<br>&nbsp;&nbsp;return&nbsp;await&nbsp;new&nbsp;Promise(r&nbsp;=>&nbsp;{<br>&nbsp;&nbsp;&nbsp;&nbsp;setTimeout(()&nbsp;=>&nbsp;r(value)<br>&nbsp;&nbsp;&nbsp;&nbsp;,&nbsp;1000)<br>&nbsp;&nbsp;})<br>}<br>-&nbsp;**Invoke**<br>\$store.key&nbsp;=&nbsp;value|
+module|- **Definition**<br>const&nbsp;moduleA&nbsp;=&nbsp;{<br>&nbsp;&nbsp;state:&nbsp;{&nbsp;key:&nbsp;'a'&nbsp;}<br>}<br>const&nbsp;moduleB&nbsp;=&nbsp;{<br>&nbsp;&nbsp;state:&nbsp;{&nbsp;key:&nbsp;'b'&nbsp;}<br>}<br>createStore({<br>&nbsp;&nbsp;modules:&nbsp;{<br>&nbsp;&nbsp;&nbsp;&nbsp;a:&nbsp;moduleA,<br>&nbsp;&nbsp;&nbsp;&nbsp;b:&nbsp;moduleB<br>&nbsp;&nbsp;}<br>})<br>-&nbsp;**Invoke**<br>\$store.state.a.key<br>\$store.state.b.key|- **Definition**<br>createStore({<br>&nbsp;&nbsp;key:&nbsp;'a'<br>},&nbsp;'\$a')<br>createStore({<br>&nbsp;&nbsp;key:&nbsp;'b'<br>},&nbsp;'\$b')<br>-&nbsp;**Invoke**<br>\$a.key<br>\$b.key|
 v-model|- **Definition**<br>createStore({<br>&nbsp;&nbsp;state:&nbsp;{&nbsp;key:&nbsp;undefined&nbsp;},<br>&nbsp;&nbsp;mutations:&nbsp;{<br>&nbsp;&nbsp;&nbsp;&nbsp;key(state,&nbsp;value)&nbsp;{<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;state.key&nbsp;=&nbsp;value<br>&nbsp;&nbsp;&nbsp;&nbsp;}<br>&nbsp;&nbsp;}<br>})<br>-&nbsp;**Invoke**<br><template><br>&nbsp;&nbsp;<input&nbsp;type="text"&nbsp;v-model="key"&nbsp;/><br></template><br>...<br>computed:&nbsp;{<br>&nbsp;&nbsp;key:&nbsp;{<br>&nbsp;&nbsp;&nbsp;&nbsp;get&nbsp;()&nbsp;{<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;this.\$store.state.key<br>&nbsp;&nbsp;&nbsp;&nbsp;},<br>&nbsp;&nbsp;&nbsp;&nbsp;set&nbsp;(value)&nbsp;{<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;this.\$store.commit('key',&nbsp;value)<br>&nbsp;&nbsp;&nbsp;&nbsp;}<br>&nbsp;&nbsp;}<br>}<br>|- **Definition**<br>createStore({<br>&nbsp;&nbsp;key:&nbsp;undefined<br>},&nbsp;'\$store')<br>-&nbsp;**Invoke**<br><template><br>&nbsp;&nbsp;<input&nbsp;type="text"&nbsp;v-model="\$store.key"&nbsp;/><br></template><br>...|
 localStorage|- **Definition**<br>createStore({<br>&nbsp;&nbsp;state:&nbsp;{&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;key:&nbsp;JSON.parse(<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;localStorage.getItem('key'))<br>&nbsp;&nbsp;},<br>&nbsp;&nbsp;mutations:&nbsp;{<br>&nbsp;&nbsp;&nbsp;&nbsp;key(state,&nbsp;value)&nbsp;{<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;state.key&nbsp;=&nbsp;value<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;localStorage.setItem('key',&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;JSON.stringify(value))<br>&nbsp;&nbsp;&nbsp;&nbsp;}<br>&nbsp;&nbsp;}<br>})|- **Definition**<br>createStore({&nbsp;key:&nbsp;{&nbsp;p:&nbsp;1,&nbsp;}&nbsp;})|
-
-### 3. Advantages of ee-vuex
-Whether it's Vuex or Pinia, the core of defining a global state includes
-1. state: Equivalent to the 'data' of the Vue component
-2. getters: Equivalent to the 'computed get' of the Vue component
-3. mutations(vuex) actions(pinia): Equivalent to the 'computed set' or a method of a Vue component, mainly used to assign values to states
-
-ee-vuex does not distinguish these, and ee-vuex uses the Vue component computed form to define and invoke states
-
-This means that ee-vuex has the following **advantages**:
-- More **clear and concise definition**: A state is an object, rather than being defined in multiple objects such as state and getters
-- More **simple and convenient to use**: No need for redundant methods such as commit and dispatch, just call and assign status directly
-- **v-model**: You can use global state directly with the v-model
-- **cache**: Computed cache can be used to improve get efficiency when attribute values remain unchanged
-
-Not only that, but there are more convenient and powerful aspects of ee-vuex. Please see [Definition Core](#definition-core) in detail
 
 
 ## Installation
@@ -57,156 +97,257 @@ npm install ee-vuex
 ```
 
 ## Usage
-Please understand the following 4 points before using ee-vuex
-1. [Create Store](#1-create-store)
-2. [Define State](#11-store-object)
-3. [Import Store](#21-invoke-store)
-4. [Invoke State](#22-invoke-state)
 
-### 1. Create Store
-Create a store using the createStore method, which receives 2 parameters
+### 1. Basic Usage
 
-1.1 [Store Object](#11-store-object): Multiple states can be defined
+Here is an example of using counters that are both available in Vuex and Pinia
+```
+// stores/counter.js
+import { createStore } from 'ee-vuex'
 
-1.2 [Store Name](#12-store-name): Specify a store name to import store
+export default createStore({
+  count: 1,
+}, "$ee")
+```
 
-- Global Store: The entire project is callable, which is a common use of ee-vuex
+Define the store and use it in a component
+```
+// Import Store
+// import $ee from '@/stores/counter'
+// or
+// import eeVuex from 'ee-vuex'
+// const { $ee } = eeVuex // 或者 const $ee = eeVuex.$ee
+// or(Recommended)
+const { $ee } = require('ee-vuex').default
+
+export default {
+  setup() {
+    console.log($ee.count) // -> 1
+    $ee.count++
+    console.log($ee.count) // -> 2
+    // Return the store instance to use it in the template
+    return { $ee }
+  },
+}
+```
+
+The Options API makes it easier to use the ee-vuex. You can globally register the store with the Vue instance at the entrance, so there is no need to repeatedly import the store for each component
+```
+// main.js
+import { createApp } from 'vue'
+import $ee from './stores/counter.js'
+
+createApp({ /* Component */ })
+  // Global Registration Store
+  .use($ee)
+  .mount('#app')
+```
+
+Using globally registered stores in components defined by Options APIs
+```
+export default {
+  mounted() {
+    console.log(this.$ee);
+  }
+}
+```
+
+Using global states in templates is also very simple
+```
+<template>
+  <div @click="$ee.count++">{{ $ee.count }}</div>
+  <input v-model="$ee.count" />
+</template>
+```
+
+### 2. Advanced Usage
+
+The second parameter of createStore can give the store created by ee-vuex more advanced usage
+```
+import { createStore } from 'ee-vuex'
+
+// It can directly represent the store name as a string
+export default createStore({}, "$ee")
+
+// Or it can be an object that provides a more detailed definition
+// of the special usage of the store
+export default createStore({}, 
+{
+  name: "$ee",
+  this: undefined,
+  set(key, value, store) { },
+})
+```
+- name: The name of the store
+- this: When calling the get/set/default method, this points to the store instance by default
+- set: Callback after assigning a property
+
+Please refer to the following examples for the specific usage of these configurations
+
+#### 2.1 Multiple Stores
+- Store names can distinguish instances of stores
+- All named stores can be registered at once using the default object returned by ee-vuex
 ```
 import { createApp } from 'vue'
-import { createStore } from 'ee-vuex'
+import ee, { createStore } from 'ee-vuex'
 
 const vue = createApp({ /* Component */ });
 
-vue.use(createStore({
-  // Define states here
-},
-// Store name
-"$store"))
+// Create and register stores one by one
+// vue.use(createStore({}, "$store1"))
+// vue.use(createStore({}, "$store2"))
+// vue.use(createStore({}, "$store3"))
 
-// Multiple stores
-vue.use(createStore({}, "$store2"))
-vue.use(createStore({}, "$store3"))
+// Create stores one by one
+// Register all named stores at once (recommended)
+createStore({}, "$store1")
+createStore({}, "$store2")
+createStore({}, "$store3")
+vue.use(ee);
 
-// A non named store requires you to save the store instance yourself.
+// Non named store, you need to save the store instance yourself
 // Calling vue.use(store) has no effect
 const store = createStore({});
 ```
 
-- Local Store: A single component can be called, and a local store can be used instead of the component's data, computed, and watch
+In the Vue component, the instance of the store can be obtained through the name
 ```
-// file test.vue
-<template></template>
-
-<script type="text/javascript">
-import { createStore } from 'ee-vuex'
-export default {
-  name: "test",
-  data() {
-    return {
-      // At this point, the store is like the store name
-      // and the store can be called through this.store
-      store: createStore({
-        // Define states here
-      })
-    }
-  },
-}
-</script>
-
-<style></style>
-```
-
-#### 1.1 Store Object
-Store object can define multiple states, and defining a state mainly includes the following four core contents
-- [Default Value](#1-default-value)
-- [Persistence](#2-persistence)
-- [Get Function](#3-get-function)
-- [Set Function](#4-set-function)
-
-For details, please refer to [Definition Core](#definition-core)
-
-#### 1.2 Store Name
-Creating a store **does not have a store name by default**. You should give it a name for the global store.
-
-`createStore` can create **multiple store with different names**. For a named store, its instance can be obtained globally. For the method of obtaining it, please see [Call Store](#21-call-store). Only the store with the same name that was first created can obtain its instance globally.
-
-When creating multiple named stores, you can also globally import these stores in the following way
-```
-import { createApp } from 'vue'
-import stores, { createStore } from 'ee-vuex'
-
-// Create multiple stores
-createStore({}, "a")
-createStore({}, "b")
-createStore({}, "c")
-createStore({}, "d")
-
-// Directly importing the objects returned by ee-vuex by default
-// allows you to use the a b c d store in the Vue component
-createApp({}).use(stores);
-```
-
-
-### 2. Use Store
-#### 2.1 Invoke Store
-For non named stores, you need to save the store instance yourself. For details, please refer to [Local Store of Create Store](#1-create-store).
-
-For a named store, you can obtain its instance through the store name
-
-- JS imports a global store instance (vue.use is not required)
-```
-import x from 'ee-vuex'
-const { $store1, $store2, $store3 } = x;
-```
-
-- Obtain a store instance within the component (requires vue.use, refer to [Create Store](#1-create-store) and [Store Name](#12-store-name))
-```
-// file test.vue
 <template>
-  <!-- Directly use [Store Name] in the template to obtain a store instance -->
   <div>{{ $store1 }}</div>
   <div>{{ $store2 }}</div>
   <div>{{ $store3 }}</div>
 </template>
+```
 
-<script type="text/javascript">
+#### 2.2 data Store
+It is recommended to skip this chapter first and read through [Define Core](#definition-core) to understand the convenience of defining states in ee-vuex before returning here
+
+Please ensure that you have understood the following points before reading this chapter
+- Understand the Options API
+- Understand the [Basic Usage](#1.-basic-usage) of ee-vuex
+- ee-vuex can create [Multiple Stores](#2.1-multiple-stores) through createStore
+- ee-vuex uses [Object-Oriented Design Approach](#2.-why-use-ee-vuex) to [Define Store States](#definition-core)
+
+Local stores are created in Vue components to replace data, computed, and watch
+```
+import { createStore } from 'ee-vuex'
+
 export default {
-  name: "test",
-  mounted() {
-    // Use 'this' in JS
-    this.$store1 || this.$store2 || this.$store3
+  data() {
+    // Same usage as global stores
+    // example: this.$ee.count
+    return { 
+      $ee: createStore({ 
+        count: {
+          default: this.modelValue,
+          set(value) {
+            this.$emit("update:modelValue", value);
+          }
+        }
+      },
+      {
+        // Local stores do not require setting a store name
+        // Local stores this should point to the instance of Vue component
+        this: this
+      })
+    }
+
+    // No need for a store instance
+    // the store instance is just the component instance
+    // example: this.count, Compared to the above usage methods
+    // the $ee store instance is no longer needed
+    // return createStore({ ... }, { ... })
+  },
+  props: ['modelValue'],
+  watch: {
+    // The ee-vuex can only replace data and computed
+    // and a watch is still required for changes in props
+    modelValue(value) {
+      this.$ee.count = value;
+    }
+  }
+}
+```
+
+#### 2.3 props Store
+Please ensure that you have read and understood the [data Store](#2.2-data-store)
+
+In the example of a data store, props are still not encapsulated into the store. The props in Vue are unidirectional data streams, and when using the v-model, it can also be considered bidirectional. For object-oriented applications, there is no externally assignable and internally read-only data like props. Both external and internal values can be assigned, and the assignment effect should be consistent
+
+This example uses injectStore to encapsulate the props together, making them conform to object-oriented design principles
+```
+// hello-ee-vuex.vue
+import { injectStore } from 'ee-vuex'
+
+// Export Component Call injectStore
+export default injectStore({
+  props: {
+    count: {
+      // There are two ways to define props: ee-vuex and original props
+      // ee-vuex: get, set, p, default
+      // props: type, required, validator, default
+      type: Number,
+      // Because there are both default methods
+      // both default methods will take effect
+      default: 0,
+    },
+  },
+})
+```
+Props can be defined using either the original definition of props or the [Definition Method](#definition-core) in ee-vuex
+
+At this point, the props are **read-write** **bidirectional**, and the usage method is as follows
+
+- Component internal: props become writable and can be directly assigned values
+```
+<!-- The template can be directly assigned values --> 
+<template>
+  <p @click="count++">{{ count }}</p>
+  <input v-model="count" />
+</template>
+
+...
+
+// JavaScript can also directly assign values
+mounted() {
+  this.count = 5;
+}
+```
+
+- Component external: used as before
+```
+<template>
+  <hello-ee-vuex v-model="myCount" @click="myCount++" />
+  <p>{{ myCount }}</p>
+</template>
+
+<script>
+export default {
+  data() {
+    myCount: 5,
   }
 }
 </script>
 ```
 
-#### 2.2 Invoke State
-With the store instance, it is very simple to call the store states, just like calling a computed attribute.
+At this point, the internal component's p and input, and the external component's p will synchronously display the same data. And when both internal and external components click on the p tag, both components can see data increment
 
-As you can see, the following example code is very simple. For more advantages of ee-vuex, please refer to [Advantages of ee-vuex](#3-advantages-of-ee-vuex)
+#### 2.4 set
+Set can record the assignment operations of all store states in the log
+```
+import { createStore } from 'ee-vuex'
 
-(Assume that the following code exists in the global store $store, which contains the state state1.)
-- Template get
+export default createStore({
+  count: 0,
+  name: 'Hello World',
+}, {
+  set(key, value, store) {
+    // count -> 0
+    // name -> Hello World
+    console.log(key, " -> ", value);
+  }
+})
 ```
-<div>{{ $store.state1 }}</div>
-```
-- JS get
-```
-mounted() {
-  const state1 = this.$store.state1;
-}
-```
-- Template set
-```
-<input type="text" v-model="$store.state1" />
-```
-- JS set
-```
-mounted() {
-  this.$store.state1 = "text value";
-}
-```
-
 
 ## Definition Core
 
@@ -218,9 +359,9 @@ In the store definition of ee vuex, a state is an object that contains the follo
 
 And when you only want to customize one of these fields, there will also be a corresponding **concise definition** method.
 
-For the benefits of defining states in this way, please refer to [Advantages of ee-vuex](#3-advantages-of-ee-vuex)
+For the benefits of defining states in this way, please refer to [Advantages of ee-vuex](#2.-why-use-ee-vuex)
 
-The following example code is written in the Create Store reference [Store Object](#1-create-store)
+The following example code is written in the Create Store reference [Basic Usage](#1.-basic-usage)
 ```
 import { createStore } from 'ee-vuex'
 createStore({
