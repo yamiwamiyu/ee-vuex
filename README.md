@@ -116,7 +116,7 @@ Define the store and use it in a component
 // import $ee from '@/stores/counter'
 // or
 // import eeVuex from 'ee-vuex'
-// const { $ee } = eeVuex // 或者 const $ee = eeVuex.$ee
+// const { $ee } = eeVuex // or const $ee = eeVuex.$ee
 // or(Recommended)
 const { $ee } = require('ee-vuex').default
 
@@ -324,7 +324,9 @@ mounted() {
 <script>
 export default {
   data() {
-    myCount: 5,
+    return {
+      myCount: 5,
+    }
   }
 }
 </script>

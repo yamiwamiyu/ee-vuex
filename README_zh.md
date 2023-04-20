@@ -320,7 +320,9 @@ mounted() {
 <script>
 export default {
   data() {
-    myCount: 5,
+    return {
+      myCount: 5,
+    }
   }
 }
 </script>
