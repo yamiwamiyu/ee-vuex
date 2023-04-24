@@ -8,14 +8,6 @@ export const eeVuex = {
   }
 };
 
-/**创建一个ee-vuex仓库
- * @param {Object} store 仓库的定义
- * @param {String | Object} option 仓库名或详细仓库设置
- * @class option
- * name: 仓库名
- * this: 调用仓库状态get/set方法的this对象，默认为仓库实例
- * set(key, value, store): 在set方法设置值给ref变量后回调
- */
 export function createStore(store, option) {
   if (option) {
     if (option.constructor == String)
@@ -219,16 +211,6 @@ export function createStore(store, option) {
   return x;
 }
 
-/** 创建一个针对vue组件props的ee-vuex仓库
- * 与createStore有什么不同
- * 1. createStore的get/set方法this指向仓库；injectStore指向vue组件实例，需要this.仓库名指向仓库
- * 2. createStore独立存在；injectStore依赖vue组件实例
- * 
- * injectStore有什么优势
- * 1. 流程更合理：通过set监听值变化，首次set在mounted而不是created，且任然会触发set
- * 2. 流程更统一：属性不再分data/props/computed/watch，都相当于computed属性
- * 3. 流程更简单：因为流程的统一性，组件结构更清晰，就只有 数据(props) / 方法(methods)
- */
 export function injectStore(o/*, name*/) {
   // 没有定义props的组件跳过
   if (!o.props)
