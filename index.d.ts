@@ -29,7 +29,7 @@ export declare function createStore<T>(store: Store<T>, option: {
   this?: StoreInstance<T> | any;
   /** 仓库中所有属性赋值后的回调方法，可用于记录日志等调试业务 */
   set?: typeof OnSet<T>;
-}): StoreInstance<T>;
+} | String): StoreInstance<T>;
 
 export declare interface StoreComponent<T extends Pick<T, 'props'>> extends DefineComponent {
   props: Store<T>;
