@@ -347,6 +347,26 @@ export default createStore({
 })
 ```
 
+### 3. 类型推导
+创建仓库时，建议使用.ts文件。只用增加简单的几行代码，在组件中调用仓库时就会有代码提示
+```
+// 文件后缀改为.ts：stores/counter.ts
+import { createStore } from 'ee-vuex'
+
+// 记录全局仓库返回的对象
+const store = createStore({ count: 1, }, "$ee")
+
+// 增加这几行代码就能有代码提示
+declare module '@vue/runtime-core' {
+  interface ComponentCustomProperties {
+    // 注意变量名要和仓库名一致
+    $ee: typeof store,
+  }
+}
+
+export default store;
+```
+
 ## 定义核心
 
 在ee-vuex的仓库定义中，一个状态就是一个对象，这个对象包含下面4个字段

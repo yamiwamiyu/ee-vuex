@@ -351,6 +351,26 @@ export default createStore({
 })
 ```
 
+### 3. Type Inference
+When creating a store, it is recommended to use a .ts file. Only a few simple lines of code are added, and there will be code prompts when calling the repository in the component
+```
+// Change the file suffix to .ts：stores/counter.ts
+import { createStore } from 'ee-vuex'
+
+const store = createStore({ count: 1, }, "$ee")
+
+// Adding these few lines of code will provide code prompts
+declare module '@vue/runtime-core' {
+  interface ComponentCustomProperties {
+    // Pay attention to the consistency
+    // between variable names and store names
+    $ee: typeof store,
+  }
+}
+
+export default store;
+```
+
 ## Definition Core
 
 In the store definition of ee vuex, a state is an object that contains the following 4 fields
