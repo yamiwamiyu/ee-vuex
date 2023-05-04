@@ -136,7 +136,7 @@ export function createStore(store, option) {
         // 允许get的返回值覆盖原本应该设置的值
         if (get) {
           const temp = get.call(_this, ret);
-          if (temp) {
+          if (temp != null) {
             // 异步get时(例如首次访问需要请求api获取数据)，暂时先返回原来的值
             if (temp.constructor == Promise)
               temp.then(i => {
