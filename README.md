@@ -287,10 +287,13 @@ export default injectStore({
       // ee-vuex: get, set, p, default
       // props: type, required, validator, default
       type: Number,
-      // Because there are both default methods
-      // both default methods will take effect
+      // Both default methods are available
+      // only the ee-vuex takes effect
       default: 0,
     },
+    // This is the original definition of props
+    // which does not include the features of ee-vuex
+    origin: [String, Number],
   },
 })
 ```

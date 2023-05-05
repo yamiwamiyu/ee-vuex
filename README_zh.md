@@ -284,9 +284,11 @@ export default injectStore({
       // ee-vuex: get, set, p, default
       // props: type, required, validator, default
       type: Number,
-      // 因为default两种方式都有，两种方式的default都会生效
+      // default两种方式都有，仅ee-vuex的生效
       default: 0,
     },
+    // 这是原本props的定义方式，不包含ee-vuex的特性
+    origin: [String, Number],
   },
 })
 ```

@@ -1,5 +1,22 @@
 import { ref, reactive, computed } from 'vue';
 
+const types = [
+  String,
+  Number,
+  Boolean,
+  Array,
+  Object,
+  Date,
+  Function,
+  Symbol,
+]
+
+function isEmpty(obj) {
+  for (const key in obj)
+    return false;
+  return true;
+}
+
 /** 最后创建的ee-vuex实例 */
 export const eeVuex = {
   install(vue) {
@@ -211,41 +228,87 @@ export function createStore(store, option) {
   return x;
 }
 
-export function injectStore(o/*, name*/) {
-  // 没有定义props的组件跳过
-  if (!o.props)
+export function injectStore(o) {
+  // 没有定义props的或者props是数组字符串的形式
+  if (!o.props || o.props.length != undefined)
+    return o;
+
+  // ee-vuex的简易写法(例如async)很多不符合vue组件定义props的语法
+  let vuexFlag = false;     // 是否包含ee-vuex方式定义的prop
+  const props = o.props;
+  // 区分默认的props
+  const oprops = {};
+  for (const key in props) {
+    const v = props[key];
+    if (v) {
+      const isType = v instanceof Array ?
+        v.every(i => types.indexOf(i) != -1) :
+        types.indexOf(v) != -1;
+      // 非对象：prop: Number 或者 prop: [Number, String]
+      if (isType) {
+        oprops[key] = v;
+        delete props[key];
+      } else {
+        // 对象：不包含 get, set, default, p 并且包含 type, required, validator 任意一个或者为空对象
+        if (v.constructor == Object) {
+          const isProp = isEmpty(v) || ((v.type || v.required || v.validator) && !v.get && !v.set && !v.default && !v.p);
+          if (isProp) {
+            oprops[key] = v;
+            delete props[key];
+          } else {
+            // 可能是ee-vuex和prop混合定义方式
+            const np = {};
+            if (v.type) np.type = v.type;
+            if (v.required) np.required = v.required;
+            if (v.validator) np.validator = v.validator;
+            // v.default 默认值将被视为ee-vuex的定义
+            oprops[key] = np;
+            vuexFlag = true;
+          }
+        } else {
+          // ee-vuex的简易定义
+          oprops[key] = {};
+          vuexFlag = true;
+        }
+      }
+    } else {
+      // 空值代表默认值，属于ee-vuex的定义方式
+      oprops[key] = {};
+    }
+  }
+
+  o.props = oprops;
+
+  // 全都是普通Vue组件的props定义
+  if (!vuexFlag)
     return o;
 
   if (!o.mixins)
     o.mixins = [];
 
-  const props = o.props;
-
   const mixin = {};
   // Vue3能在data和props中定义重名字段，既能接收props的值，优先级还是data中的高
   mixin.data = function () {
-    const store = createStore(props,
+    return createStore(props,
       {
         this: this,
         set(key, value) {
           this.$emit("update:" + key, value);
         }
       });
-    if (!name)
-      return store;
-    const ret = {};
-    ret[name] = store;
-    return ret;
   }
   mixin.emits = [];
   mixin.watch = {};
   for (const key in props) {
     // 注入watch侦听props在子组件被改变以同步给仓库的值
     mixin.watch["$props." + key] = function (value) {
-      // if (name)
-      //   this[name][key] = value;
-      // else
       this[key] = value;
+      // 例如值只能是0-1，当前值为1，外部修改props为1.2
+      // 内部限定成了1，1和原本的值不变，不重新赋值
+      // 不赋值导致option.set不执行
+      // 进而导致外部值和内部值不一致
+      // 所以这里强制回传值
+      this.$emit("update:" + key, this[key]);
     }
     // 注入emits
     mixin.emits.push("update:" + key);
@@ -256,14 +319,9 @@ export function injectStore(o/*, name*/) {
   // 所以首次赋值默认值在mounted最为合适
   mixin.mounted = function () {
     // 对所有属性赋值上prop传的值，此时赋值一般可以覆盖掉props设置的默认值
-    for (const key in props) {
-      if (this.$props[key] != undefined) {
-        // if (name)
-        //   this[name][key] = this.$props[key];
-        // else
+    for (const key in props)
+      if (this.$props[key] != undefined)
         this[key] = this.$props[key];
-      }
-    }
   }
 
   o.mixins.push(mixin);
