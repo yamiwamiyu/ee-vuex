@@ -46,7 +46,7 @@ export function createStore(store, option) {
 
     if (value != undefined) {
       if (value.constructor == Function || value.constructor?.name == 'AsyncFunction') {
-        if (value.length == 1) {
+        if (value.length == 1 || value.length == 2) {
           // set方法
           set = value;
         } else {
@@ -177,7 +177,8 @@ export function createStore(store, option) {
           __default.length = 0;
         // 允许set的返回值覆盖原本应该设置的值
         if (set) {
-          const temp = set.call(_this, value);
+          // 将__set传入，允许set内部提前赋值
+          const temp = set.call(_this, value, __set);
           if (temp != null) {
             if (temp.constructor == Promise) {
               // 异步set时(例如api确认后再赋值)

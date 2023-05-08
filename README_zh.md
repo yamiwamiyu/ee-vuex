@@ -280,11 +280,11 @@ import { injectStore } from 'ee-vuex'
 export default injectStore({
   props: {
     count: {
-      // 定义props可以使用ee-vuex和原本props两种定义方式
+      // 定义props可以使用ee-vuex和原本vue的props两种定义方式
       // ee-vuex: get, set, p, default
-      // props: type, required, validator, default
+      // vue: type, required, validator, default
       type: Number,
-      // default两种方式都有，仅ee-vuex的生效
+      // default两种方式都有，在没有get, set, p时仅vue生效
       default: 0,
     },
     // 这是原本props的定义方式，不包含ee-vuex的特性
@@ -294,7 +294,7 @@ export default injectStore({
 ```
 props既可以使用原本props的定义方式，也可以使用ee-vuex中的[定义方式](#定义核心)
 
-此时props是 **可读写的** **双向的**，使用方法如下
+ee-vuex形式的props是 **可读写的** **双向的**，使用方法如下
 
 - 组件内部：props变为可写的，可以直接对其赋值
 ```
@@ -575,8 +575,8 @@ key: {
 - 简洁定义：注意参数个数防止和[set函数](#4-set函数)混淆，注意不能用箭头函数防止和[默认值](#1-默认值)混淆
 ```
 key() {}
-// OK：需要参数请写多一个无用参数
-key(value, x) {}
+// OK：需要参数请写多2个无用参数
+key(value, x, x) {}
 // OK：可以function定义
 key: function() {}
 // NG：不可以用箭头函数，会被认为是默认值
@@ -587,7 +587,7 @@ key: () => {}
 ```
 // 设置token后再获取key时，2秒前返回undefined，2秒后返回和token一样的值
 token: undefined,
-async key(value, x) {
+async key(value, x, x) {
   // 注意加判断在没有值时赋值，防止多次异步取值
   if (this.token && !value) {
     return await new Promise(r => {
@@ -651,17 +651,20 @@ mounted() {
   }, 3000)
 }
 ```
-- 调用set函数时，值还没有真正赋值给状态，所以在set函数内调用get无法获得最新值，在set中需要get到状态自身的值的情况可以用setTimeout延时调用
+- 调用set函数时，值还没有真正赋值给状态，所以在set函数内调用get无法获得最新值，在set中需要get到状态自身的值的情况可以用setTimeout延时调用，或者调用第二个参数的方法提前进行赋值
 ```
-key(value) {
+key(value, set) {
   // 假如value为1，将输出value 1 oldvalue undefined
   console.log("value", value, "oldvalue", this.key)
-  // 输出$store.key: undefined
+  // 输出'$store.key: undefined'
   api();
   setTimeout(() => {
-    // 输出$store.key: 1
+    // 输出'$store.key: 1'
     api();
   })
+  // 调用set后输出'$store.key: 1'
+  set(value);
+  api();
 }
 
 // api方法打印仓库状态key的值

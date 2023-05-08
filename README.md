@@ -283,12 +283,12 @@ import { injectStore } from 'ee-vuex'
 export default injectStore({
   props: {
     count: {
-      // There are two ways to define props: ee-vuex and original props
+      // There are two ways to define props: ee-vuex and original Vue's props
       // ee-vuex: get, set, p, default
-      // props: type, required, validator, default
+      // vue: type, required, validator, default
       type: Number,
       // Both default methods are available
-      // only the ee-vuex takes effect
+      // only the vue takes effect
       default: 0,
     },
     // This is the original definition of props
@@ -299,7 +299,7 @@ export default injectStore({
 ```
 Props can be defined using either the original definition of props or the [Definition Method](#definition-core) in ee-vuex
 
-At this point, the props are **read-write** **bidirectional**, and the usage method is as follows
+The ee-vuex form of props is **read-write** **bidirectional**, and the usage method is as follows
 
 - Component internal: props become writable and can be directly assigned values
 ```
@@ -583,8 +583,8 @@ key: {
 - Concise Definition: Note that the number of parameters should not be confused with [Set Function](#4-set-function), and that arrow functions should not be used to prevent confusion with [Default Value](#1-default-value)
 ```
 key() {}
-// OK: Parameter required, please write one more useless parameter
-key(value, x) {}
+// OK: Parameter required, please write two more useless parameters
+key(value, x， x) {}
 // OK: Can be defined by function
 key: function() {}
 // NG: The arrow function cannot be used and will be considered the default value
@@ -597,7 +597,7 @@ key: () => {}
 // an undefined value is returned 2 seconds ago,
 // and the same value as the token is returned 2 seconds later
 token: undefined,
-async key(value, x) {
+async key(value, x, x) {
   // Pay attention to adding judgment to assign values
   // when there is no value,
   // to prevent multiple asynchronous values
@@ -678,6 +678,9 @@ key(value) {
     // output '$store.key: 1'
     api();
   })
+  // After calling set, output '$store.key: 1'
+  set(value);
+  api();
 }
 
 // The API method prints the value of the store state key
