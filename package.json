@@ -1,7 +1,7 @@
 {
   "name": "ee-vuex",
   "version": "1.1.4",
-  "description": "More convenient to use vuex",
+  "description": "More convenient global state management for Vue than Vuex and Pinia",
   "repository": "https://github.com/yamiwamiyu/ee-vuex",
   "homepage": "https://github.com/yamiwamiyu/ee-vuex/blob/master/README.md",
   "main": "index.js",
