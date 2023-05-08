@@ -236,11 +236,10 @@ export function injectStore(o) {
   // ee-vuex的简易写法(例如async)很多不符合vue组件定义props的语法
   let vuexFlag = false;     // 是否包含ee-vuex方式定义的prop
   const props = o.props;
-  // 区分默认的props
-  const oprops = {};
+  const oprops = {};  // vue的props
   for (const key in props) {
     const v = props[key];
-    if (v) {
+    if (v != undefined) {
       const isType = v instanceof Array ?
         v.every(i => types.indexOf(i) != -1) :
         types.indexOf(v) != -1;
@@ -249,9 +248,9 @@ export function injectStore(o) {
         oprops[key] = v;
         delete props[key];
       } else {
-        // 对象：不包含 get, set, default, p 并且包含 type, required, validator 任意一个或者为空对象
+        // vue对象：不包含 get, set, p 并且包含 type, required, validator, default 任意一个或者为空对象
         if (v.constructor == Object) {
-          const isProp = isEmpty(v) || ((v.type || v.required || v.validator) && !v.get && !v.set && !v.default && !v.p);
+          const isProp = isEmpty(v) || ((v.type || v.required || v.validator || v.default) && !v.get && !v.set && v.p !== undefined);
           if (isProp) {
             oprops[key] = v;
             delete props[key];
@@ -267,13 +266,14 @@ export function injectStore(o) {
           }
         } else {
           // ee-vuex的简易定义
-          oprops[key] = {};
+          oprops[key] = null;
           vuexFlag = true;
         }
       }
     } else {
-      // 空值代表默认值，属于ee-vuex的定义方式
-      oprops[key] = {};
+      // 空值代表任意类型，属于vue的定义方式
+      oprops[key] = null;
+      delete props[key];
     }
   }
 
