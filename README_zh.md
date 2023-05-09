@@ -286,6 +286,8 @@ export default injectStore({
       type: Number,
       // default两种方式都有，在没有get, set, p时仅vue生效
       default: 0,
+      // 包含了get，所以count就是ee-vuex的定义方式了
+      get() {},
     },
     // 这是原本props的定义方式，不包含ee-vuex的特性
     origin: [String, Number],
@@ -576,7 +578,7 @@ key: {
 ```
 key() {}
 // OK：需要参数请写多2个无用参数
-key(value, x, x) {}
+key(value, x, y) {}
 // OK：可以function定义
 key: function() {}
 // NG：不可以用箭头函数，会被认为是默认值
@@ -587,7 +589,7 @@ key: () => {}
 ```
 // 设置token后再获取key时，2秒前返回undefined，2秒后返回和token一样的值
 token: undefined,
-async key(value, x, x) {
+async key(value, x, y) {
   // 注意加判断在没有值时赋值，防止多次异步取值
   if (this.token && !value) {
     return await new Promise(r => {

@@ -290,6 +290,8 @@ export default injectStore({
       // Both default methods are available
       // only the vue takes effect
       default: 0,
+      // Including 'get', so count is the prop of ee-vuex
+      get() {},
     },
     // This is the original definition of props
     // which does not include the features of ee-vuex
@@ -584,7 +586,7 @@ key: {
 ```
 key() {}
 // OK: Parameter required, please write two more useless parameters
-key(value, x， x) {}
+key(value, x, y) {}
 // OK: Can be defined by function
 key: function() {}
 // NG: The arrow function cannot be used and will be considered the default value
@@ -597,7 +599,7 @@ key: () => {}
 // an undefined value is returned 2 seconds ago,
 // and the same value as the token is returned 2 seconds later
 token: undefined,
-async key(value, x, x) {
+async key(value, x, y) {
   // Pay attention to adding judgment to assign values
   // when there is no value,
   // to prevent multiple asynchronous values
