@@ -330,7 +330,7 @@ export function injectStore(o) {
         this[key] = this.$props[key];
   }
 
-  o.mixins.unshift(mixin);
+  o.mixins.push(mixin);
   return o;
 }
 
