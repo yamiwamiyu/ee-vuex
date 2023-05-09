@@ -1,4 +1,4 @@
-import { ref, reactive, computed } from 'vue';
+import { ref, reactive, computed, toRefs } from 'vue';
 
 const types = [
   String,
@@ -289,14 +289,19 @@ export function injectStore(o) {
 
   const mixin = {};
   // Vue3能在data和props中定义重名字段，既能接收props的值，优先级还是data中的高
+  // bug: 如果mixins或extends包含组件自身有多个data
+  // data的function会走mergeFn的逻辑以合并所有data
+  // 合并data时会取消掉computed引用而变成普通的值
+  // 所以需要使用toRefs
+  // todo: 感觉不够优雅，最好能检测mergeFn时再使用toRefs
   mixin.data = function () {
-    return createStore(props,
+    return toRefs(createStore(props,
       {
         this: this,
         set(key, value) {
           this.$emit("update:" + key, value);
         }
-      });
+      }));
   }
   mixin.emits = [];
   mixin.watch = {};
@@ -325,7 +330,7 @@ export function injectStore(o) {
         this[key] = this.$props[key];
   }
 
-  o.mixins.push(mixin);
+  o.mixins.unshift(mixin);
   return o;
 }
 
