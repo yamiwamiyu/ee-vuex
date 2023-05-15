@@ -1,6 +1,6 @@
 {
   "name": "ee-vuex",
-  "version": "1.2.2",
+  "version": "1.2.3",
   "description": "More convenient global state management for Vue than Vuex and Pinia",
   "repository": "https://github.com/yamiwamiyu/ee-vuex",
   "homepage": "https://github.com/yamiwamiyu/ee-vuex/blob/master/README.md",

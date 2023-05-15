@@ -251,7 +251,7 @@ export function injectStore(o) {
       } else {
         // vue对象：不包含 get, set, p 并且包含 type, required, validator, default 任意一个或者为空对象
         if (v.constructor == Object) {
-          const isProp = isEmpty(v) || ((v.type || v.required || v.validator || v.default) && !v.get && !v.set && v.p !== undefined);
+          const isProp = isEmpty(v) || ((v.type || v.required || v.validator || v.default) && !v.get && !v.set && v.p == undefined);
           if (isProp) {
             oprops[key] = v;
             delete props[key];
