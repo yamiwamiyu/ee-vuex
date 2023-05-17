@@ -879,7 +879,7 @@ export default createStore({
         // the set method will not be triggered,
         // similar to the Vue component's watch
         if (!user)
-          this.commit('setToken', undefined);
+          this.token = undefined;
         // Let the API return an empty object
         // before obtaining user information to prevent empty references
         return {};

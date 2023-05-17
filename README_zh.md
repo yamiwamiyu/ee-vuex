@@ -848,7 +848,7 @@ export default createStore({
         // 对比3. 无论清空token或user，都应该将另一个状态一并清空，互相清空也不会导致死循环
         // 因为set一样的值，不会触发set方法，类似于Vue组件的watch
         if (!user)
-          this.commit('setToken', undefined);
+          this.token = undefined;
         // 让api获取到用户信息之前返回空对象以防止空引用
         return {};
       }
