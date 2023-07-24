@@ -288,20 +288,42 @@ export function injectStore(o) {
     o.mixins = [];
 
   const mixin = {};
-  // Vue3能在data和props中定义重名字段，既能接收props的值，优先级还是data中的高
-  // bug: 如果mixins或extends包含组件自身有多个data
-  // data的function会走mergeFn的逻辑以合并所有data
-  // 合并data时会取消掉computed引用而变成普通的值
-  // 所以需要使用toRefs
-  // todo: 感觉不够优雅，最好能检测mergeFn时再使用toRefs
-  mixin.data = function () {
-    return toRefs(createStore(props,
+  /*
+  Vue3能在data和props中定义重名字段，既能接收props的值，优先级还是data中的高
+  bug: 如果mixins或extends包含组件自身有多个data
+  data的function会走mergeFn的逻辑以合并所有data
+  合并data时会取消掉computed引用而变成普通的值
+  且没有办法只获得computed引用而步触发get值
+  则只能自己创建属性(也就是方法，只有在调用时才触发)来封装一次computed
+  // vue中 computed 原本也会执行这样的操作
+  const c = computed({
+      get,
+      set
+  });
+  Object.defineProperty(ctx, key, {
+      enumerable: true,
+      configurable: true,
+      get: () => c.value,
+      set: v => (c.value = v)
+  });
+  在赋值时，setup > data > props > ctx
+  所以 Object.defineProperty 定义到 ctx 上会被 props 的赋值给拦截
+  还是得赋值到 setup 或 data 上
+  这里赋值到 data 上来解决
+   */
+  mixin.beforeMount = function () {
+    const content = createStore(props,
       {
         this: this,
         set(key, value) {
           this.$emit("update:" + key, value);
         }
-      }));
+      });
+    for (const key in content)
+      Object.defineProperty(this.$data, key, {
+        get: () => content[key],
+        set: v => content[key] = v
+      });
   }
   mixin.emits = [];
   mixin.watch = {};
