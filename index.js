@@ -106,7 +106,7 @@ export function createStore(store, option) {
         return;
       // 持久化
       if (p) {
-        if (value != null)
+        if (value !== undefined)
           localStorage.setItem(key, JSON.stringify(value));
         else
           localStorage.removeItem(key);
@@ -153,13 +153,13 @@ export function createStore(store, option) {
         // 允许get的返回值覆盖原本应该设置的值
         if (get) {
           const temp = get.call(_this, ret);
-          if (temp != null) {
+          if (temp !== undefined) {
             // 异步get时(例如首次访问需要请求api获取数据)，暂时先返回原来的值
             if (temp.constructor == Promise)
               temp.then(i => {
                 // 异步操作结束后，使用set赋值从而再次触发get使get能获得异步返回的最新值
                 // 使用时注意异步操作应该有条件判断，否则set后再次触发get可能导致死循环
-                if (i != null)
+                if (i !== undefined)
                   x[key] = i;
               });
             else
@@ -179,14 +179,14 @@ export function createStore(store, option) {
         if (set) {
           // 将__set传入，允许set内部提前赋值
           const temp = set.call(_this, value, __set);
-          if (temp != null) {
+          if (temp !== undefined) {
             if (temp.constructor == Promise) {
               // 异步set时(例如api确认后再赋值)
               // 注意：这里使用了Promise，只要Promise完成，computed一定会首先触发一次get，且获得的是旧值
               // 如果异步又成功set了值，那么随后还会触发一次get获得新值
               temp.then(i => {
                 // 操作成功时才赋值，如果操作成功返回空，则赋值原来set的值
-                if (i != null)
+                if (i !== undefined)
                   __set(i);
               }).catch(() => { })
               // 暂时不赋值
