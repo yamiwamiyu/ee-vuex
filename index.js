@@ -1,4 +1,4 @@
-import { ref, reactive, computed, toRefs } from 'vue';
+import { ref, reactive, computed } from 'vue';
 
 const types = [
   String,
@@ -51,6 +51,7 @@ export function createStore(store, option) {
           set = value;
         } else {
           // key: () => {} 缺少value.prototype ，视为设置默认值
+          // todo: 仅有箭头函数视为默认值，但是 this 默认会被编译成 undefined 导致无法使用 this
           // [async] key() {} 缺少value.prototype ，视为get
           // key: function [name]() {} 有value.prototype ，视为get
           if (value.prototype || value.toString().startsWith(key) || value.toString().startsWith('async ' + key)) {
@@ -311,7 +312,16 @@ export function injectStore(o) {
   所以 Object.defineProperty 定义到 ctx 上会被 props 的赋值给拦截
   还是得赋值到 setup 或 data 上
   这里赋值到 data 上来解决
+
+  bug: 有 watch 时，观察了一个 computed 变量，get 读取了 ee-vuex 的 props 时
+  希望 get 读取的变量不是 props 而是 $data 中的属性
+  在 beforeMount 之前 watch 就调用了 computed 的 get 方法，进而读取到的是 props 而不是 $data
+  在 beforeMount 之前，this.$data 又是不可扩展的不能进行 Object.defineProperty 操作
+  暂时没找到解决方案，用 ee-vuex 的 props 或 data 来替代需要 watch 的 computed 吧
    */
+  // 如果组件没有 data 这里也默认创建一个 data
+  // 否则 Object.isExtensible(this.$data) 为 false 不能使用 Object.defineProperty
+  mixin.data = function () { return {}; }
   mixin.beforeMount = function () {
     const content = createStore(props,
       {
@@ -320,11 +330,12 @@ export function injectStore(o) {
           this.$emit("update:" + key, value);
         }
       });
-    for (const key in content)
+    for (const key in content) {
       Object.defineProperty(this.$data, key, {
         get: () => content[key],
         set: v => content[key] = v
       });
+    }
   }
   mixin.emits = [];
   mixin.watch = {};

@@ -862,3 +862,74 @@ export default createStore({
 2. get下需要对其它状态进行set时，作用域可以用this指向自身
 3. set相同的值不会执行set，来回set也不会造成死循环
 4. 一个状态仅定义一个对象，代码简洁
+
+## BUG
+
+1. 例如如下示例模拟单选组件
+```
+import { injectStore } from 'ee-vuex'
+
+export default injectStore({
+  name: "radio",
+  props: {
+    // 选中时的值
+    value: { default: true },
+    // ee-vuex 的 props
+    modelValue: false,
+  },
+  computed: {
+    // 是否选中
+    checked: {
+      get() {
+        return this.modelValue == this.value;
+      },
+      set(value) {
+        if (value)
+          this.modelValue = this.value;
+        else
+          this.modelValue = undefined;
+      }
+    }
+  },
+  watch: {
+    // 主要是修改 value 时，可能会引起 checked 变化
+    // 此时需要同步 modelValue 和 value 的值
+    checked(value) {
+      this.checked = value;
+    }
+  }
+})
+```
+
+2. 创建组件时，代码的执行顺序是 `watch -> checked.get -> props.modelValue -> beforeMount`
+
+ee-vuex 的 injectStore 是在 beforeMount 时向 data 中注入了 props 的可读写属性
+
+也就是说 checked.get 引用的 modelValue 应该是 data.modelValue 而不是 props.modelValue
+
+导致 checked.get 和 data.modelValue 并没有形成响应
+
+3. 解决方法：不使用 watch 和 computed 改用 ee-vuex
+```
+import { injectStore } from 'ee-vuex'
+
+export default injectStore({
+  name: "radio",
+  props: {
+    value: { default: true },
+    modelValue: false,
+    // 使用 ee-vuex
+    checked: {
+      get() {
+        return this.modelValue == this.value;
+      },
+      set(value) {
+        if (value)
+          this.modelValue = this.value;
+        else
+          this.modelValue = undefined;
+      }
+    }
+  },
+})
+```

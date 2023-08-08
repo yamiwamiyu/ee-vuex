@@ -894,3 +894,76 @@ The code indicates a comparison between **ee-vuex**
 2. When other states need to be set under get, the scope can be pointed to itself using this
 3. Setting the same value does not execute set, and round-trip sets do not cause a dead loop
 4. A state only defines one object, and the code is concise
+
+## BUG
+
+1. For example, the following example simulates a radio component
+```
+import { injectStore } from 'ee-vuex'
+
+export default injectStore({
+  name: "radio",
+  props: {
+    // Value when selected
+    value: { default: true },
+    // ee-vuex's props
+    modelValue: false,
+  },
+  computed: {
+    // is checked
+    checked: {
+      get() {
+        return this.modelValue == this.value;
+      },
+      set(value) {
+        if (value)
+          this.modelValue = this.value;
+        else
+          this.modelValue = undefined;
+      }
+    }
+  },
+  watch: {
+    // Mainly when modifying the value, it may cause checked changes
+    // It is necessary to synchronize the values of modelValue and value
+    checked(value) {
+      this.checked = value;
+    }
+  }
+})
+```
+
+2. When creating a component, the execution order of the code is
+
+`watch -> checked.get -> props.modelValue -> beforeMount`
+
+The injectStore of ee-vuex injects the read and write properties of props into the data during beforeMount
+
+That is to say, the modelValue referenced by checked.get should be data.modelValue instead of props.modelValue
+
+Resulting in no response from checked.get and data.modelValue
+
+3. Solution: Instead of using watch and computed, use ee-vuex instead
+```
+import { injectStore } from 'ee-vuex'
+
+export default injectStore({
+  name: "radio",
+  props: {
+    value: { default: true },
+    modelValue: false,
+    // use ee-vuex instead
+    checked: {
+      get() {
+        return this.modelValue == this.value;
+      },
+      set(value) {
+        if (value)
+          this.modelValue = this.value;
+        else
+          this.modelValue = undefined;
+      }
+    }
+  },
+})
+```
