@@ -252,6 +252,7 @@ export function injectStore(o) {
         delete props[key];
       } else {
         // vue对象：不包含 get, set, p 并且包含 type, required, validator, default 任意一个或者为空对象
+        // bug: { default: false } 时希望是普通 props 但是也变成 ee-vuex 的 prop 了
         if (v.constructor == Object) {
           const isProp = isEmpty(v) || ((v.type || v.required || v.validator || v.default) && !v.get && !v.set && v.p == undefined);
           if (isProp) {
