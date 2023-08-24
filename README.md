@@ -339,6 +339,22 @@ export default {
 
 At this point, the internal component's p and input, and the external component's p will synchronously display the same data. And when both internal and external components click on the p tag, both components can see data increment
 
+* extends & mixins: When a component is used for extends or mixins, you only want to modify the default value of props, which can be assigned in the `beforeMount` lifecycle
+```
+// child.vue
+import parent from './hello-ee-vuex.vue'
+
+export default {
+  extends: parent,
+  beforeMount() {
+    // If there is no external value assigned to props
+    // set the default value to 1
+    if (this.$props.count === undefined)
+      this.count = 1;
+  }
+}
+```
+
 #### 2.4 set
 Set can record the assignment operations of all store states in the log
 ```

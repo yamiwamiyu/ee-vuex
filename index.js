@@ -1,4 +1,4 @@
-import { ref, reactive, computed } from 'vue';
+import { ref, reactive, computed, toRaw, isReactive } from 'vue';
 
 const types = [
   String,
@@ -15,6 +15,15 @@ function isEmpty(obj) {
   for (const key in obj)
     return false;
   return true;
+}
+
+/** 判断两个值是否相同，相同时不重复赋值 */
+function isEquals(v1, v2) {
+  if (isReactive(v1))
+    v1 = toRaw(v1);
+  if (isReactive(v2))
+    v2 = toRaw(v2);
+  return v1 === v2;
 }
 
 /** 最后创建的ee-vuex实例 */
@@ -103,7 +112,7 @@ export function createStore(store, option) {
     // 因为set允许异步，所以同步和异步最后都是调用这个set来赋值
     const __set = (value) => {
       // 相同的值不重新赋值
-      if (v.value === value)
+      if (isEquals(v.value, value))
         return;
       // 持久化
       if (p) {
@@ -114,7 +123,7 @@ export function createStore(store, option) {
       }
       v.value = value;
       if (option.set)
-        option.set.call(_this, key, value, x);
+        option.set.call(_this, key, v.value, x);
     }
     x[key] = computed({
       get: function () {
@@ -171,7 +180,7 @@ export function createStore(store, option) {
       },
       set: function (value) {
         // 相同的值不重新赋值
-        if (v.value === value)
+        if (isEquals(v.value, value))
           return;
         // 外部调用set比调用get还要先的话，忽略掉get的默认值
         if (!setDefaultValue && __default.length)
@@ -252,7 +261,6 @@ export function injectStore(o) {
         delete props[key];
       } else {
         // vue对象：不包含 get, set, p 并且包含 type, required, validator, default 任意一个或者为空对象
-        // bug: { default: false } 时希望是普通 props 但是也变成 ee-vuex 的 prop 了
         if (v.constructor == Object) {
           const isProp = isEmpty(v) || ((v.type || v.required || v.validator || v.default) && !v.get && !v.set && v.p == undefined);
           if (isProp) {

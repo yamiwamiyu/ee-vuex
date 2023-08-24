@@ -334,6 +334,22 @@ export default {
 
 此时，内部组件的p和input，外部组件的p将同步显示一样的数据。且内部组件和外部组件点击p标签，两个组件都能看到数据自增
 
+* 继承 & 混入：组件用于继承或混入时，你仅希望修改 props 的默认值，可以在 beforeMount 生命周期中赋默认值
+```
+// child.vue
+import parent from './hello-ee-vuex.vue'
+
+export default {
+  // 继承使用了 injectStore 的父组件
+  extends: parent,
+  beforeMount() {
+    // 如果外部没有给 props 赋值，则让默认值为 1
+    if (this.$props.count === undefined)
+      this.count = 1;
+  }
+}
+```
+
 #### 2.4 set
 set可以将仓库所有状态的赋值操作记录到日志中
 ```
