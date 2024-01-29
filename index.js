@@ -52,6 +52,8 @@ export function createStore(store, option) {
     const __default = [];
     // 是否持久化
     let p;
+    // todo: 是否支持异步值
+    let _async;
 
     if (value != undefined) {
       if (value.constructor == Function || value.constructor?.name == 'AsyncFunction') {
@@ -75,7 +77,7 @@ export function createStore(store, option) {
         // 直接key: localStorage代表要持久化这个状态，其它默认
         p = true;
       } else if (value.constructor == Object) {
-        if (value.p || value.get || value.set || value.default) {
+        if (value.p || value.get || value.set || value.default || value.async) {
           // ee-vuex结构
           if (value.p)
             p = true;
@@ -92,6 +94,8 @@ export function createStore(store, option) {
               __default.push(value.default);
             }
           }
+          if (value.async)
+            _async = value.async;
         } else {
           // 对象默认值
           __default.push(value);
