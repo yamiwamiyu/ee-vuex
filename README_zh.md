@@ -387,6 +387,29 @@ declare module '@vue/runtime-core' {
 export default store;
 ```
 
+js 创建仓库返回的实例也是具有代码提示的，字段类型根据默认或 jsdoc 定义的类型而定
+```
+import { createStore } from 'ee-vuex'
+
+const store = createStore({
+  // num 为 number 类型
+  num: 1,
+  // num 为 string 类型
+  str: '',
+  // arr 为 any[] 类型
+  arr: () => [],
+  
+  // arr2 为 {a:number, b:string}[] 类型
+  /** @type { function():{a:number, b:string}[] } */
+  arr2: () => [],
+
+  // obj 为 number 类型
+  obj: {
+    default: 5
+  }
+})
+```
+
 ## 定义核心
 
 在ee-vuex的仓库定义中，一个状态就是一个对象，这个对象包含下面4个字段

@@ -392,6 +392,29 @@ declare module '@vue/runtime-core' {
 export default store;
 ```
 
+The instance returned by creating a repository in JavaScript also has code prompts, and the field type depends on the default or JSdoc defined type
+```
+import { createStore } from 'ee-vuex'
+
+const store = createStore({
+  // num is of type number
+  num: 1,
+  // str is of type string
+  str: '',
+  // arr is of type any[]
+  arr: () => [],
+
+  // arr2 is of type {a:number, b:string}[]
+  /** @type { function():{a:number, b:string}[] } */
+  arr2: () => [],
+
+  // obj is of type number
+  obj: {
+    default: 5
+  }
+})
+```
+
 ## Definition Core
 
 In the store definition of ee vuex, a state is an object that contains the following 4 fields
