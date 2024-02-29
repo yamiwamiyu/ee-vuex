@@ -1,75 +1,19 @@
 # ee-vuex
 
-ee-vuex is the global state manager for Vue3, which allows for shared state across components/pages.
+> Intuitive, type safe and flexible Store for Vue.
 
-"ee" represents **Encapsulated** and **Easy**, making developers' code more concise.
+> "ee" represents **Encapsulated** and **Easy**, making developers' code more concise.
 
-### 1. Use Case
-Global state is typically used for:
-1. Sharing data across components
-  - Logged in user information
-  - User Settings
-  - Language Preference
-2. Data needs to be passed between components
-  - Filter Condition
-  - Load Status
-3. Caching enumerated data
-  - Fixed drop-down options
-  - Supported Languages
+- 💡 Intuitive
+- 🔑 Type Safe
+- 🔌 Extensible
+- 🏗 Modular by design
+- 📦 Extremely light
 
-A complete application that includes registration and login generally requires global state
+## 👉 [Demo with Vue 3 on StackBlitz](https://stackblitz.com/edit/ee-vuex-demo)
 
-ee-vuex also recommends defining a store in the Vue component with an Options API style to replace data, computed, watch, and even props. Please refer to the [data Store](#22-data-store) and [props Store](#23-props-store) for details
 
-### 2. Why use ee-vuex
-Vuex or Pinia are generally used in Vue projects to manage global states, which are the two most widely used global state management libraries recommended by Vue
-- vuex: https://vuex.vuejs.org/
-- pinia: https://pinia.web3doc.top/core-concepts/
-
-Vuex was the first library to be launched, and after the emergence of Vue3, Pinia gradually replaced Vuex
-
-For a comparison between Pinia and Vuex, please refer to Pinia's official documentation https://pinia.web3doc.top/introduction.html#%E4%B8%8E-vuex-%E7%9A%84%E6%AF%94%E8%BE%83
-
-When defining stores, Vuex and Pinia both include three core concepts: State, Getter, and Action, which are equivalent to data, computed, and method in components
-
-ee-vuex simplifies or unifies these core concepts, and the core of ee-vuex has and only has [properties](#definition-core)
-
-Programmers who have used ORM or OOP languages such as C# and Java should be aware that when defining encapsulation types, we typically only
-- Property: used to get/set data, equivalent to computed get and set, and a data variable that is only visible within the component
-```
-public partial class People
-{
-  private string name;
-  private int age;
-
-  public string Name
-  {
-    get { return name; }
-    set { name = value; }
-  }
-
-  public int Age
-  {
-    get { return age; }
-    set { age = value; }
-  }
-}
-```
-
-- Method: used to manipulate data, equivalent to methods
-```
-public partial class People
-{
-  public void Grow()
-  {
-    this.Age++;
-  }
-}
-```
-
-Vue defines components much like object-oriented definition types. ee-vuex adopts an object-oriented design approach, using Vue3's newly introduced ref, reactive, and computed methods to define stores and states. This is different from Vuex, Pinia, and even Vue's own design approach
-
-ee-vuex has the following **advantages**:
+## Feature
 - More **clear and concise definition**: A state is an object, rather than being defined in multiple objects such as state and getters
 - More **simple and convenient to use**: No need for methods such as mapGetters and mapState, no need for methods such as commit and dispatch, just call and assign states directly
 - **v-model**: You can use global state directly with the v-model
@@ -92,7 +36,8 @@ localStorage|- **Definition**<br>createStore({<br>&nbsp;&nbsp;state:&nbsp;{&nbsp
 
 ## Installation
 
-```
+```bash
+# or pnpm or yarn
 npm install ee-vuex
 ```
 

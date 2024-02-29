@@ -1,75 +1,18 @@
 # ee-vuex
-ee-vuex 是 Vue3 的全局状态管理器，它允许跨组件/页面共享状态。
+简便、类型安全且灵活的Vue Store。
 
 ee代表了**封装(Encapsulated)** 和 **简单(Easy)**，让开发者的代码更简洁。
 
-### 1. 使用场景
-全局状态一般用于：
-1. 跨组件共享数据
-  - 登录的用户信息
-  - 用户设置
-  - 语言偏好
-2. 需要在组件之间传递数据
-  - 搜索条件
-  - 加载状态
-3. 缓存枚举的数据
-  - 省市级联
-  - 支持的语言
+- 💡 简单易懂
+- 🔑 类型安全
+- 🔌 可扩展的
+- 🏗 模块化设计
+- 📦 极度轻量
 
-一个包含注册登录的完整应用一般都需要用到全局状态。
+## 👉 [Demo with Vue 3 on StackBlitz](https://stackblitz.com/edit/ee-vuex-demo)
 
-ee-vuex也推荐在选项式API风格的Vue组件中定义仓库来替代data, computed, watch, 甚至是props，具体参考[data仓库](#22-data仓库)和[props仓库](#23-props仓库)
 
-### 2. 为什么使用ee-vuex
-vue项目中一般使用Vuex或Pinia来管理全局状态，它们是vue官方推荐的，应用最广的两个全局状态管理库
-- vuex可以参考其官方文档 https://vuex.vuejs.org/zh/
-- pinia可以参考其官方文档 https://pinia.web3doc.top/core-concepts/
-
-Vuex是最先推出的库，Vue3出现后，Pinia逐渐在取代Vuex
-
-Pinia和Vuex的比较，可以参考Pinia的官方文档 https://pinia.web3doc.top/introduction.html#%E4%B8%8E-vuex-%E7%9A%84%E6%AF%94%E8%BE%83
-
-Vuex和Pinia在定义仓库时，都包含了 State, Getter, Action 3个核心概念，这些概念等同于组件中的 data, computed 和 method
-
-ee-vuex简化或者说统一了这些核心概念，ee-vuex的核心有且仅有[属性](#定义核心)
-
-后端使用过ORM或使用过 C#, Java 等面向对象的编程语言的程序员，应该都清楚我们在定义封装类型时，一般只有
-
-- 属性：用于读取/保存数据，等同于computed的get和set，和一个仅组件内部可见的data变量
-```
-public partial class People
-{
-  private string name;
-  private int age;
-
-  public string Name
-  {
-    get { return name; }
-    set { name = value; }
-  }
-
-  public int Age
-  {
-    get { return age; }
-    set { age = value; }
-  }
-}
-```
-
-- 方法：用于操作数据，等同于methods
-```
-public partial class People
-{
-  public void Grow()
-  {
-    this.Age++;
-  }
-}
-```
-
-vue定义组件跟面向对象定义类型很像，ee-vuex正是采用面向对象的设计思路，使用Vue3新推出的 ref, reactive, computed 来定义仓库和属性，这跟Vuex和Pinia甚至是Vue本身的设计思路上就是不同的
-
-ee-vuex这么做有以下**优势**：
+## 特点
 - 定义更**清晰简洁**：一个状态就是一个对象，而不用分别定义到 state, getters 和 actions 等多个对象里
 - 使用更**简单方便**：不需要 mapGetters, mapState 等方法来将仓库的内容映射到组件中，也不需要commit，dispatch等来调用方法和赋值，直接调用和赋值状态即可
 - **v-model**：可以将全局状态直接用于v-model
