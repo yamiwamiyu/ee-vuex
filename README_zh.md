@@ -1,5 +1,5 @@
 # ee-vuex
-简便、类型安全且灵活的Vue Store。
+简便、类型安全且灵活的 Vue 全局仓库。
 
 ee代表了**封装(Encapsulated)** 和 **简单(Easy)**，让开发者的代码更简洁。
 
