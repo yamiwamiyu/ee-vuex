@@ -85,25 +85,31 @@ export function createStore(store, option) {
             get = value.get;
           if (value.set)
             set = value.set;
-          if (value.default) {
-            if (value.default.constructor == Array) {
-              // 多默认值
-              __default.push(...value.default);
-            } else {
-              // 单默认值
-              __default.push(value.default);
-            }
-          }
+          if (value.init)
+            __default.push(value.init);
+          if (value.default)
+            __default.push(value.default);
+          // if (value.default) {
+          //   if (value.default.constructor == Array) {
+          //     // 多默认值
+          //     __default.push(...value.default);
+          //   } else {
+          //     // 单默认值
+          //     __default.push(value.default);
+          //   }
+          // }
           if (value.async)
             _async = value.async;
         } else {
           // 对象默认值
           __default.push(value);
         }
-      } else if (value.constructor == Array) {
-        // 多默认值
-        __default.push(...value);
-      } else {
+      }
+      // else if (value.constructor == Array) {
+      //   // 多默认值
+      //   __default.push(...value);
+      // }
+      else {
         // 单默认值
         __default.push(value);
       }
