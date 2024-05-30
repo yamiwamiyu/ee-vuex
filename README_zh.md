@@ -209,11 +209,9 @@ export default {
 ```
 
 #### 2.3 props仓库
-请先确保你已经看过并理解[data仓库](#22-data仓库)
+vue 中的 props 是单向数据流，使用 v-model 时也可以认为它是双向的。在 **Vue 3.4+** 的组合式 API 写法中，增加了 **defineModel** 来更方便的定义和使用 props 属性。ee-vuex 的 props 仓库相当于是 defineModel 的选项式写法的解决方案，且 ee-vuex 的解决方案比 defineModel 出得更早更方便。对于这样的 props 无论外部和内部都可以对其赋值，且赋值效果应该是一致的
 
-data仓库的例子中，props任然没有被封装进仓库。vue中的props是单向数据流，使用v-model时也可以认为它是双向的。对于面向对象来说，并没有像props一样外部可赋值内部只读的数据。无论外部和内部都可以对其赋值，且赋值效果应该是一致的
-
-本例子就是使用injectStore来将props一并封装起来，使其符合面向对象的设计原则
+核心方法：injectStore
 ```
 // hello-ee-vuex.vue
 // 引入injectStore
@@ -224,7 +222,7 @@ export default injectStore({
   props: {
     count: {
       // 定义props可以使用ee-vuex和原本vue的props两种定义方式
-      // ee-vuex: get, set, p, default
+      // ee-vuex: get, set, p, init, default
       // vue: type, required, validator, default
       type: Number,
       // default两种方式都有，在没有get, set, p时仅vue生效
@@ -237,11 +235,11 @@ export default injectStore({
   },
 })
 ```
-props既可以使用原本props的定义方式，也可以使用ee-vuex中的[定义方式](#定义核心)
+props 既可以使用原本 props 的定义方式，也可以使用 ee-vuex 中的[定义方式](#定义核心)
 
-ee-vuex形式的props是 **可读写的** **双向的**，使用方法如下
+ee-vuex 形式的 props 是 **可读写的** **双向的**，使用方法如下
 
-- 组件内部：props变为可写的，可以直接对其赋值
+- 组件内部：props 变为可写的，可以直接对其赋值
 ```
 <!-- 模板中可以直接赋值 --> 
 <template>
@@ -251,7 +249,7 @@ ee-vuex形式的props是 **可读写的** **双向的**，使用方法如下
 
 ...
 
-// JavaScript中也可以直接赋值
+// JavaScript 中也可以直接赋值
 mounted() {
   this.count = 5;
 }
@@ -388,17 +386,15 @@ ee-vuex的默认值对于异步[缓存枚举的数据](#1-使用场景)是非常
 - api异步获取数据后替换默认值
 
 ee-vuex的默认值具备以下特点可以实现上述需求
-- **支持数组**：即可设置多个默认值
-- **支持异步**：数组元素可以是异步的Promise，即可访问api获取值。多个异步元素会进行**队列操作**
+- **支持普通默认值**：直接的默认值
+- **支持异步默认值**：默认值可以是异步的 Promise 或返回 Promise 的函数，即可访问 api 获取值
 - **支持懒加载**：**首次get**状态时才仅**触发一次**赋值默认值的操作，即可节约性能和内存
 
 具体实现请看下面**多默认值**的示例
 
-作者的话：一般来说，应该只有上面例子中使用2个默认值的情况，至少我暂时没有想到需要使用超过2个默认值的场景。虽然用数组实现了允许多个默认值的队列，但我希望仅用一个更简便的定义来配置这2个默认值。期待有想法的你能帮作者提供更好的方案，或者给出确实需要2个以上默认值的实战场景
-
 <hr>
 
-- 普通定义：字段default
+- 普通定义：字段 default
 ```
 key: {
   default: undefined,
@@ -445,7 +441,7 @@ key: async () => {
 key: function() { return 5 }
 ```
 
-- Object：使用简单定义时需要和状态定义的Object区分，不能包含p，default，get，set的任意一个
+- Object：使用简单定义时需要和状态定义的Object区分，不能包含p，init, default，get，set的任意一个
 ```
 // OK：默认值为对象
 key: {
@@ -475,28 +471,22 @@ key: {
 }
 ```
 
-- 多默认值：使用数组，数组里的元素支持上面所有类型，有异步时从前往后队列赋值
+- 多默认值：init 和 default
 ```
-// 2秒前[]，2秒后[1,2,3]，再2秒后[4,5,6]
-key: [[],
-  () => new Promise(r => {
-    setTimeout(() => {
-      r([1, 2, 3])
-    }, 2000)
-  }),
-  () => new Promise(r => {
-    setTimeout(() => {
-      r([4, 5, 6])
-    }, 2000)
-  }),
-]
-// 注意想要默认值是数组时，要嵌套数组或使用Function，不论是普通定义还是简洁定义
-// NG：默认值为3
-key: [1, 2, 3]
-// OK：多默认值，采用第一个默认值，默认值[]
-key: [[]]
-// OK：Function返回值[]
-key: () => []
+// 2秒前0，2秒后2
+key: {
+  // 同步的，不支持函数
+  init: 0,
+  // 异步的，可以是函数，会自动调用读取返回值
+  default: async () => {
+    return await new Promise(resolve => {
+      setTimeout(() => {
+        // 2 秒后赋值
+        resolve(2);
+      }, 2000)
+    })
+  }
+}
 ```
 ### 2. 是否持久化
 仓库状态的值是保存在内存里的，当我们刷新页面时，状态的值就会被清空了。

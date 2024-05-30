@@ -5,3 +5,4 @@ crawler/
 package-lock.json
 *.bat
 *.txt
+test.js

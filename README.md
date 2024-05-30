@@ -215,11 +215,9 @@ export default {
 ```
 
 #### 2.3 props Store
-Please ensure that you have read and understood the [data Store](#22-data-store)
+The props in Vue are unidirectional data streams, and when using the v-model, it can also be considered bidirectional.  In the combination API notation of **Vue 3.4+**, **defineModel** has been added to facilitate the definition and use of props properties. The props store of ee-vuex is equivalent to an option based solution for defineModel, and the solution of ee-vuex was developed earlier and more convenient than defineModel. For such props, they can be assigned values both externally and internally, and the assignment effect should be consistent
 
-In the example of a data store, props are still not encapsulated into the store. The props in Vue are unidirectional data streams, and when using the v-model, it can also be considered bidirectional. For object-oriented applications, there is no externally assignable and internally read-only data like props. Both external and internal values can be assigned, and the assignment effect should be consistent
-
-This example uses injectStore to encapsulate the props together, making them conform to object-oriented design principles
+Core method: injectStore
 ```
 // hello-ee-vuex.vue
 import { injectStore } from 'ee-vuex'
@@ -229,7 +227,7 @@ export default injectStore({
   props: {
     count: {
       // There are two ways to define props: ee-vuex and original Vue's props
-      // ee-vuex: get, set, p, default
+      // ee-vuex: get, set, p, init, default
       // vue: type, required, validator, default
       type: Number,
       // Both default methods are available
@@ -395,8 +393,8 @@ In the above example, the status default value should have the following charact
 - Replace default values after api asynchronously obtains data
 
 The default value of ee-vuex has the following characteristics to meet the above requirements
-- **Support Array**: Multiple default values can be set
-- **Supports Asynchronous**: The array element can be an asynchronous Promise, which accesses the API to obtain values. Multiple asynchronous elements perform **queue operations**
+- **Support Array**: Direct default values
+- **Supports Asynchronous**: The default value can be an asynchronous Promise or a function that returns Promise, allowing access to the API to obtain the value
 - **Support Lazy Loading**: **First get** will **Trigger once** an assignment of the default value, which can save performance and memory
 
 For specific implementation, please see the following example of **multiple default values**
@@ -452,7 +450,7 @@ key: async () => {
 key: function() { return 5 }
 ```
 
-- Object: When using a simple definition, it is necessary to distinguish it from the object defined by the state. It cannot contain any of p, default, get, or set
+- Object: When using a simple definition, it is necessary to distinguish it from the object defined by the state. It cannot contain any of p, init, default, get, or set
 ```
 // OK: Default value is object
 key: {
@@ -483,30 +481,23 @@ key: {
 }
 ```
 
-- Multiple default values: Use an array. The elements in the array support all of the above types. When asynchronous, assign values from the front to the back queue
+- Multiple default values: init and default
 ```
-// Two seconds ago [], two seconds later [1,2,3], and two seconds later [4,5,6]
-key: [[],
-  () => new Promise(r => {
-    setTimeout(() => {
-      r([1, 2, 3])
-    }, 2000)
-  }),
-  () => new Promise(r => {
-    setTimeout(() => {
-      r([4, 5, 6])
-    }, 2000)
-  }),
-]
-// Note that when you want the default value to be an array
-// you need to nest the array or use a Function
-// whether it is a general definition or a concise definition
-// NG: The default value is 3
-key: [1, 2, 3]
-// OK: Multiple default values, using the first default value, default value []
-key: [[]]
-// OK: Function return value []
-key: () => []
+// 2 seconds ago 0, 2 seconds later 2
+key: {
+  // Synchronous, function not supported
+  init: 0,
+  // Asynchronous, can be a function that automatically calls
+  // to read the return value
+  default: async () => {
+    return await new Promise(resolve => {
+      setTimeout(() => {
+        // Assign value after 2 seconds
+        resolve(2);
+      }, 2000)
+    })
+  }
+}
 ```
 ### 2. Persistent
 The value of the store state is stored in memory, and when we refresh the page, the value of the status will be cleared.
