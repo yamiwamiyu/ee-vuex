@@ -1,16 +1,7 @@
 import { EmitsOptions, ComponentOptionsMixin, ComputedOptions, MethodOptions, DefineComponent, ComponentOptionsWithObjectProps, Prop, ExtractPropTypes } from 'vue';
 
-/** 给一个仓库属性赋值后的回调
- * @param key - 赋值的属性
- * @param value - 赋值的值
- * @param store - 赋值的仓库实例
- */
-declare type OnStoreSet<T> = (key: keyof T, value: any, store: StoreInstance<T>) => void;
 declare type Store<T = Record<string, unknown>> = {
   [P in keyof T]: StoreProperty<T[P]>;
-}
-declare type StoreInstance<T> = {
-  [P in keyof T]: T[P];
 }
 
 declare type StoreProperty<T = any> =
@@ -94,7 +85,11 @@ export declare function createStore<T, R = Readonly<ExtractStore<T>>, This = R>(
   name?: String;
   /** 仓库定义的 get/set/默认值 方法调用时的this实例，默认为仓库实例 */
   this?: This;
-  /** 仓库中所有属性赋值后的回调方法，可用于记录日志等调试业务 */
-  set?: OnStoreSet<T>;
+  /** 仓库中所有属性赋值后的回调方法，可用于记录日志等调试业务
+   * @param key - 赋值的属性
+   * @param value - 赋值的值
+   * @param store - 赋值的仓库实例
+   */
+  set?: (key: keyof T, value: any, store: R) => void;
 } | String) : R;
 //: ExtractStore<T>;
