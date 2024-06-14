@@ -1,4 +1,4 @@
-import { ref, reactive, computed, toRaw, isReactive } from 'vue';
+import { ref, reactive, computed, toRaw, isReactive, App } from 'vue';
 
 const types = [
   String,
@@ -28,6 +28,7 @@ function isEquals(v1, v2) {
 
 /** 最后创建的ee-vuex实例 */
 export const eeVuex = {
+  /** @param {App} vue */
   install(vue) {
     for (const key in eeVuex)
       eeVuex[key].install?.(vue);
@@ -344,12 +345,16 @@ export function injectStore(o) {
    */
   // 如果组件没有 data 这里也默认创建一个 data
   // 否则 Object.isExtensible(this.$data) 为 false 不能使用 Object.defineProperty
-  mixin.data = function () { return {}; }
+  mixin.data = function () { return { __propsEmit: {} }; }
   mixin.beforeMount = function () {
     const content = createStore(props,
       {
         this: this,
         set(key, value) {
+          // emit 之后有可能外部数据变化后又触发 watch["$props." + key]
+          // 然后又 emit 一次值，导致外部传入的 props 值修改两次
+          // 虽然影响不大，但感觉也算是 bug
+          this.__propsEmit[key] = true;
           this.$emit("update:" + key, value);
         }
       });
@@ -368,9 +373,15 @@ export function injectStore(o) {
       this[key] = value;
       // 例如值只能是0-1，当前值为1，外部修改props为1.2
       // 内部限定成了1，1和原本的值不变，不重新赋值
-      // 不赋值导致option.set不执行
-      // 进而导致外部值和内部值不一致
-      // 所以这里强制回传值
+      // 不赋值导致 option.set 不执行且不会 emit 被限定的 1 回去
+      // 进而导致外部值(1.2)和内部值(1)不一致
+      // 所以这里强制回传值让外部值变回 1
+      // 但是如果原本就是 set 触发的 emit 导致外部值变化这里就会重复 emit 了
+      // 所以做出如下判断
+      if (this.__propsEmit[key]) {
+        delete this.__propsEmit[key];
+        return;
+      }
       this.$emit("update:" + key, this[key]);
     }
     // 注入emits
