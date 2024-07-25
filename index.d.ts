@@ -46,6 +46,9 @@ export declare interface StoreObject<T> {
    * 可以使用按位 | 来指定多个值，例如 `async: '1' | '2' | '8'` 代表 get/set 异步，赋值异步结果
    */
   async?: (undefined | '0' | '1' | '2' | '4' | '8');
+
+  // todo: 新增判断 Store 的某个值是否异步正在加载，并获取 Promise 对象，就可以取代 async 了
+  // 对于 Promise 作为状态返回的情况忽略不解决，仓库里就不应该存放函数
 }
 
 declare type StoreProps<P = Data> = {
