@@ -2,7 +2,10 @@
   "name": "ee-vuex",
   "version": "1.4.0",
   "description": "More convenient global status manager than Vuex and Pinia",
-  "repository": "https://github.com/yamiwamiyu/ee-vuex",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yamiwamiyu/ee-vuex.git"
+  },
   "homepage": "https://github.com/yamiwamiyu/ee-vuex/blob/master/README.md",
   "main": "index.js",
   "type": "module",
