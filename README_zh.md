@@ -351,6 +351,37 @@ const store = createStore({
 })
 ```
 
+### 异步状态
+
+仓库状态的[默认值](#1-默认值)，[get](#3-get函数)，[set](#4-set函数)都可以异步产生结果。在异步完成前，状态将保持它上一次的值
+
+获取状态的异步结果在用于显示加载动画时非常有用，例如从后端获取所有的语言列表
+
+```
+const store = createStore({
+  languages: () => new Promise(resolve => {
+    setTimeout(() => {
+      // 这里用延时来模拟 api 延迟
+      resolve(['zh', 'en', 'jp'])
+    }, 1000)
+  })
+}, 'store')
+```
+
+模板展示语言列表，但是未加载完成时显示加载动画
+```
+<template>
+  <div v-if="store.getAsync('languages').async">正在加载...</div>
+  <ul v-else>
+    <li v-for="item in store.languages">{{ item }}</li>
+  </ul>
+</template>
+```
+
+获取异步状态的核心方法为 `store.getAsync`，返回对象包含两个值
+1. `async: boolean` 是否异步
+2. `promise: Promise<T> | T` 异步进程，若没有异步会获取到当前的值
+
 ## 定义核心
 
 在ee-vuex的仓库定义中，一个状态就是一个对象，这个对象包含下面4个字段

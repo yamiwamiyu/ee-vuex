@@ -358,6 +358,37 @@ const store = createStore({
 })
 ```
 
+### Async State
+
+The [default value](#1-default-value), [get](#3-get-function), and [set](#4-set-function) of the store state can all generate results asynchronously. Before asynchronous completion, the state will maintain its previous value
+
+The asynchronous result of obtaining the state is very useful for displaying loading animations, such as obtaining a list of all languages from the backend
+
+```
+const store = createStore({
+  languages: () => new Promise(resolve => {
+    setTimeout(() => {
+      // Here, we use latency to simulate API latency
+      resolve(['zh', 'en', 'jp'])
+    }, 1000)
+  })
+}, 'store')
+```
+
+Template displays language list, but shows loading animation before loading is complete
+```
+<template>
+  <div v-if="store.getAsync('languages').async">Loading...</div>
+  <ul v-else>
+    <li v-for="item in store.languages">{{ item }}</li>
+  </ul>
+</template>
+```
+
+The core method for obtaining asynchronous state is `store.getAsync`, which returns an object containing two values
+1. `async: boolean` Is it asynchronous
+2. `promise: Promise<T> | T` Asynchronous process, if there is no asynchrony, it will obtain the current value
+
 ## Definition Core
 
 In the store definition of ee vuex, a state is an object that contains the following 4 fields

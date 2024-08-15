@@ -1,4 +1,5 @@
-import { ref, reactive, computed, toRaw, isReactive, App } from 'vue';
+/* eslint-disable */
+import { ref, reactive, computed, toRaw, isReactive } from 'vue';
 
 const types = [
   String,
@@ -28,7 +29,7 @@ function isEquals(v1, v2) {
 
 /** 最后创建的ee-vuex实例 */
 export const eeVuex = {
-  /** @param {App} vue */
+  /** @param {import('vue').App} vue */
   install(vue) {
     for (const key in eeVuex)
       eeVuex[key].install?.(vue);
@@ -44,7 +45,22 @@ export function createStore(store, option) {
 
   // 持久化数据
   const pdatas = [];
+  // 每个属性的异步状态
+  /** @type {Record<string, { promises: Promise[], async: { promise: Promise, async: boolean } }>} */
+  const asyncs = reactive({});
+  function pushAsync(key, promise) {
+    let arr = asyncs[key].promises;
+    let withFinally = promise.finally(() => {
+      arr.splice(arr.findIndex(i => i == withFinally), 1);
+    });
+    arr.push(withFinally);
+  }
+  // 仓库对象
   const x = reactive({});
+  x.getAsync = function(key) {
+    return asyncs[key].async;
+  }
+  // this 指针对象
   const _this = option.this ?? x;
   for (const key in store) {
     const value = store[key];
@@ -53,8 +69,6 @@ export function createStore(store, option) {
     const __default = [];
     // 是否持久化
     let p;
-    // todo: 是否支持异步值
-    // let _async;
 
     if (value != undefined) {
       if (value.constructor == Function || value.constructor?.name == 'AsyncFunction') {
@@ -153,12 +167,13 @@ export function createStore(store, option) {
               if (d.constructor == Function || d.constructor?.name == 'AsyncFunction')
                 dret = d.call(_this, _this);
               if (dret && dret.constructor == Promise) {
-                dret.then(i => {
+                pushAsync(key, dret.then(i => {
                   // 有异步时，默认值将形成队列，set时防止清空后面的默认值
                   setDefaultValue = true;
                   x[key] = i;
                   setDefaultValue = false;
-                });
+                  return i;
+                }));
                 // 有异步时，暂时停止赋值默认值，后面的默认值进行队列赋值
                 break;
               } else {
@@ -181,12 +196,14 @@ export function createStore(store, option) {
           if (temp !== undefined) {
             // 异步get时(例如首次访问需要请求api获取数据)，暂时先返回原来的值
             if (temp?.constructor == Promise)
-              temp.then(i => {
+              pushAsync(key, temp.then(i => {
                 // 异步操作结束后，使用set赋值从而再次触发get使get能获得异步返回的最新值
                 // 使用时注意异步操作应该有条件判断，否则set后再次触发get可能导致死循环
-                if (i !== undefined)
+                if (i !== undefined) {
                   x[key] = i;
-              });
+                  return i;
+                }
+              }));
             else
               ret = temp;
           }
@@ -210,11 +227,13 @@ export function createStore(store, option) {
               // 注意：这里使用了Promise，只要Promise完成，computed一定会首先触发一次get，且获得的是旧值
               // 如果异步又成功set了值，那么随后还会触发一次get获得新值
               // todo: 考虑修复上面这个回调 2 次的问题
-              temp.then(i => {
+              pushAsync(key, temp.then(i => {
                 // 操作成功时才赋值，如果操作成功返回空，则赋值原来set的值
-                if (i !== undefined)
+                if (i !== undefined) {
                   __set(i);
-              }).catch(() => { })
+                  return i;
+                }
+              }).catch(() => { }));
               // 暂时不赋值
               return;
             }
@@ -225,6 +244,31 @@ export function createStore(store, option) {
         __set(value);
       }
     })
+
+    asyncs[key] = {
+      promises: [],
+      async: {
+        promise: computed(() => {
+          // 首次触发 get
+          if (__default.length)
+            x[key];
+          if (!asyncs[key].promises.length)
+            return x[key];
+          return new Promise(async resolve => {
+            let result;
+            while (asyncs[key].promises.length)
+              result = await Promise.race(asyncs[key].promises);
+            resolve(result);
+          });
+        }),
+        async: computed(() => {
+          // 首次触发 get
+          if (__default.length)
+            x[key];
+          return !!asyncs[key].promises.length;
+        })
+      }
+    }
 
     // 还原持久化的值
     if (p) {
@@ -246,7 +290,7 @@ export function createStore(store, option) {
 
   if (option.name) {
     if (eeVuex[option.name]) {
-      console.error("The vuex object already contains a warehouse named", option.name)
+      console.error("The vuex object already contains a store named", option.name)
     } else {
       x.install = (vue) => { vue.config.globalProperties[option.name] = x; }
       eeVuex[option.name] = x;
