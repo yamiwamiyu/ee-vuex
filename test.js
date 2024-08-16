@@ -29,12 +29,8 @@ const comp = injectStore({
         test2: String,
     },
     mounted() {
-        // todo: Vue 的 Props 没有注释
-        this.$props.test2
-        this.$props.test
-        // todo: $emit 事件函数不正确
         // todo: get/set 函数的参数类型推断不正确
-        this.$emit('')
+        this.$emit('update:test', )
     }
 });
 
@@ -49,7 +45,7 @@ defineComponent({
         },
     },
     mounted() {
-        this.$props.test2
+        this.$props.test
     }
 })
 

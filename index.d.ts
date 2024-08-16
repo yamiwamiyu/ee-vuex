@@ -27,7 +27,7 @@ type StorePropertyToEmits<T> = {
 }
 /** 从 vue 和 ee-vuex 的状态定义中，筛选出 vue 的状态 */
 type FilterVueProps<T> = {
-  [K in Exclude<keyof T, keyof FilterStoreProperty<T>>]: T[K];
+  [K in keyof T as K extends keyof FilterStoreProperty<T> ? never : K]: T[K];
 };
 
 /**
@@ -58,7 +58,7 @@ export function injectStore<
 >
   (
     options: ComponentOptionsWithStoreProps<PropsOptions, RawBindings, D, C, M, Mixin, Extends, E, EE, I, II, S>
-  ): Prettify<PrivateProps>
+  ): Prettify<Required<StorePropertyToEmits<ExtractStore<FilterStoreProperty<PropsOptions>>>>>
 
 type ComponentOptionsWithStoreProps<
   PropsOptions = ComponentObjectPropsOptions,
@@ -77,10 +77,10 @@ type ComponentOptionsWithStoreProps<
   VueProps = ExtractPropTypes<FilterVueProps<PropsOptions>>,
   StoreProps = ExtractStore<FilterStoreProperty<PropsOptions>>,
   PrivateProps = VueProps & StoreProps,
-  Emits = Prettify<E & StorePropertyToEmits<StoreProps>>,
-  PublicProps = Prettify<VueProps & StoreProps & EmitsToProps<Emits>>,
+  Emits = E & StorePropertyToEmits<StoreProps>,
+  PublicProps = Prettify<VueProps & StoreProps & EmitsToProps<E>>,
   Defaults = ExtractDefaultPropTypes<FilterVueProps<PropsOptions>>,
-  This = CreateComponentPublicInstance<PublicProps, RawBindings, D & PrivateProps, C, M, Mixin, Extends, Emits, PublicProps, Defaults, false, I, S>
+  This = CreateComponentPublicInstance<PublicProps, RawBindings, D & PrivateProps, C, M, Mixin, Extends, Required<Emits>, PublicProps, Defaults, false, I, S>
 >
   = ComponentOptionsBase<Props, RawBindings, D, C, M, Mixin, Extends, Emits, EE, Defaults, I, II, S> & {
     props: PropsOptions & ThisType<This>
