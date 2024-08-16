@@ -1,12 +1,103 @@
-import { EmitsOptions, ComponentOptionsMixin, ComputedOptions, MethodOptions, DefineComponent, ComponentOptionsWithObjectProps, Prop, ExtractPropTypes } from 'vue';
+import { EmitsOptions, ComponentOptionsMixin, ComputedOptions, MethodOptions, Prop, ExtractPropTypes, SlotsType, ComponentInjectOptions, ExtractPropTypes, ObjectEmitsOptions, ExtractDefaultPropTypes, ComponentObjectPropsOptions, CreateComponentPublicInstance, ComponentOptionsBase, } from 'vue';
 
-/** 仓库的输入属性 */
-declare type Store<T = Record<string, unknown>> = {
+type Prettify<T> = {
+  [K in keyof T]: T[K];
+} & {}
+
+/** Vue 定义的类型，但是没有加 export，只能复制出来 */
+type EmitsToProps<T extends EmitsOptions> = T extends string[] ? {
+  [K in `on${Capitalize<T[number]>}`]?: (...args: any[]) => any;
+} : T extends ObjectEmitsOptions ? {
+  [K in `on${Capitalize<string & keyof T>}`]?: K extends `on${infer C}` ? (...args: T[Uncapitalize<C>] extends (...args: infer P) => any ? P : T[Uncapitalize<C>] extends null ? any[] : never) => any : never;
+} : {};
+
+/** 从 props 和 ee-vuex 的状态定义中，筛选出 ee-vuex 的状态 */
+type FilterStoreProperty<T> = {
+  [K in keyof T as
+  // ee-vuex
+  T[K] extends StoreObject ? K :
+  // vue
+  T[K] extends Prop<infer _> ? never :
+  // ee-vuex 的 get/set/默认值
+  K]?: T[K];
+}
+/** 将 FilterStoreProperty 筛选后的状态生成对应事件 */
+type StorePropertyToEmits<T> = {
+  [K in keyof T as `update:${K}`]: (value: T[K]) => any;
+}
+/** 从 vue 和 ee-vuex 的状态定义中，筛选出 vue 的状态 */
+type FilterVueProps<T> = {
+  [K in Exclude<keyof T, keyof FilterStoreProperty<T>>]: T[K];
+};
+
+/**
+ * 创建一个针对vue组件props的ee-vuex仓库
+ * 
+ * injectStore的特别之处
+ * 1. createStore的get/set方法this指向仓库；injectStore指向vue组件实例
+ * 2. createStore独立存在；injectStore依赖vue选项式组件实例
+ * 3. 通过set监听值变化，首次set在mounted而不是created，且任然会触发set
+ * 4. props变为双向数据流，即可读可写
+ * 
+ * @param o - 选项式定义的Vue组件
+ * @example injectStore({ props: { modelValue: 0, } })
+ */
+export function injectStore<
+  PropsOptions = ComponentObjectPropsOptions | { [x: string]: StorePropertyBase },
+  RawBindings,
+  D = {},
+  C extends ComputedOptions = {},
+  M extends MethodOptions = {},
+  Mixin extends ComponentOptionsMixin = ComponentOptionsMixin,
+  Extends extends ComponentOptionsMixin = ComponentOptionsMixin,
+  E extends ObjectEmitsOptions = {},
+  EE extends string = string,
+  S extends SlotsType = {},
+  I extends ComponentInjectOptions = {},
+  II extends string = string,
+>
+  (
+    options: ComponentOptionsWithStoreProps<PropsOptions, RawBindings, D, C, M, Mixin, Extends, E, EE, I, II, S>
+  ): Prettify<PrivateProps>
+
+type ComponentOptionsWithStoreProps<
+  PropsOptions = ComponentObjectPropsOptions,
+  RawBindings = {},
+  D = {},
+  C extends ComputedOptions = {},
+  M extends MethodOptions = {},
+  Mixin extends ComponentOptionsMixin = ComponentOptionsMixin,
+  Extends extends ComponentOptionsMixin = ComponentOptionsMixin,
+  E extends ObjectEmitsOptions = {},
+  EE extends string = string,
+  I extends ComponentInjectOptions = {},
+  II extends string = string, 
+  S extends SlotsType = {},
+
+  VueProps = ExtractPropTypes<FilterVueProps<PropsOptions>>,
+  StoreProps = ExtractStore<FilterStoreProperty<PropsOptions>>,
+  PrivateProps = VueProps & StoreProps,
+  Emits = Prettify<E & StorePropertyToEmits<StoreProps>>,
+  PublicProps = Prettify<VueProps & StoreProps & EmitsToProps<Emits>>,
+  Defaults = ExtractDefaultPropTypes<FilterVueProps<PropsOptions>>,
+  This = CreateComponentPublicInstance<PublicProps, RawBindings, D & PrivateProps, C, M, Mixin, Extends, Emits, PublicProps, Defaults, false, I, S>
+>
+  = ComponentOptionsBase<Props, RawBindings, D, C, M, Mixin, Extends, Emits, EE, Defaults, I, II, S> & {
+    props: PropsOptions & ThisType<This>
+  } & ThisType<This>;
+
+
+// 上面是 injectStore 的内容
+// 以下是 createStore 的内容
+
+
+/** 仓库 */
+type Store<T = Record<string, unknown>> = {
   [P in keyof T]: StoreProperty<T[P]>;
 }
 
 /** 仓库中的异步状态 */
-declare type AsyncState<T> = Readonly<{
+type AsyncState<T> = Readonly<{
   /** 当前的异步进程，若没有异步会返回当前值
    * 
    * 若 default, get, set 同时执行产生多个 Promise，完成时将返回最后的状态
@@ -25,7 +116,7 @@ declare type AsyncState<T> = Readonly<{
 }>
 
 /** 仓库的额外函数 */
-declare type StoreExt<T> = T & {
+type StoreExt<T> = T & {
   /** 获取属性的 default, get, set 产生的未执行完的异步状态，旨在用于状态未加载完成前显示加载动画
    * @param key - 仓库的字段名
    * @example 
@@ -57,35 +148,37 @@ declare type StoreExt<T> = T & {
   getAsync: <K extends keyof T>(key: K) => AsyncState<T[K]>;
 }
 
-declare type StoreProperty<T = any> =
-  StoreObject<T>
+type StorePropertyBase<T = any> = StoreObject<T>
   // 注意：0 个参数和 void 返回值将导致这个属性显示为 () => void 函数，其实类型为 any
   // 1 或 2 参函数代表 set
   | ((value: T, set: (value: any) => any) => void)
   // 0 或 3 参以上代表 get
-  | ((...args: any[]) => Promise<T> | T | void)
-  // 0 参函数或任意类型
-  | T;
+  | ((...args: any[]) => Promise<T> | T | void);
+
+/** 仓库中的一个状态 */
+type StoreProperty<T = any> = StorePropertyBase<T> | T;
 
 // todo: get 或 set 中的 value 推断出了 T 类型，可是实际写调用 value 却又被识别为 any
-declare interface StoreObject<T> {
+interface StoreObject<T = any> {
   /** 是否持久化到localStorage，持久化的key默认为当前属性名 */
-  p?: Boolean | Number;
+  p?: boolean | number;
   /** 获取属性值 */
-  get?: ((value: T) => Promise<T> | T | void),
+  get?: ((value: T) => Promise<T> | T | void) | ((...args: any[]) => T),
   /** 设置属性值 */
-  set?: (value: T, set: (value: T) => void) => Promise<T> | T | void;
+  set?: ((value: T, set: (value: T) => void) => Promise<T> | T | void) | ((...args: any[]) => T);
   /** 简单默认值，不支持异步，当 default 异步时作为返回前的值使用 */
   init?: T,
   /** 默认值，可以使用异步方法或返回 Promise 异步获取默认值 */
   default?: (() => Promise<T> | T) | Promise<T> | T;
-
-  // 对于 Promise 作为状态返回的情况忽略不解决，仓库里就不应该存放函数
 }
 
-declare type StoreProps<P = Data> = {
-  [K in keyof P]: Prop<P[K]> | StoreProperty<P[K]> | null;
-};
+/** 确定 StoreProperty<T> 的 T 类型 */
+type ExtractStoreProperty<T> = T extends StorePropertyBase<infer R> ? R : T;
+/** 确定仓库每个字段的 T 类型 */
+type ExtractStore<T> = T extends object ? {
+  [K in keyof T]: ExtractStoreProperty<T[K]>
+} : never;
+
 /** 确定 StoreObject<T> 的 T 类型 */
 // declare type ExtractStoreObject<T> = T extends { init: infer U } ? U
 //   : T extends { default: infer U } ? (U extends Promise<infer V> ? V : U)
@@ -94,33 +187,15 @@ declare type StoreProps<P = Data> = {
 //   : T extends { set: (value: infer U, ...args: any[]) => infer R } ? U | R | unknown
 //   : T;
 /** 确定 StoreProperty<T> 的 T 类型 */
-declare type ExtractStoreProperty<T> = 
-  // T extends object ? ExtractStoreObject<T>
-  T extends StoreObject<infer R> ? R  // 和上面几乎是一样的效果，交由 TS 自动推断泛型
-  : T extends (value: infer U, ...args: any[]) => any ? U
-  : T extends () => infer U ? U
-  : T;
-/** 确定仓库每个字段的 T 类型 */
-declare type ExtractStore<T> = T extends object ? {
-  [K in keyof T]: ExtractStoreProperty<T[K]>
-} : never;
-
-/**
- * 创建一个针对vue组件props的ee-vuex仓库
- * 
- * injectStore的特别之处
- * 1. createStore的get/set方法this指向仓库；injectStore指向vue组件实例
- * 2. createStore独立存在；injectStore依赖vue选项式组件实例
- * 3. 通过set监听值变化，首次set在mounted而不是created，且任然会触发set
- * 4. props变为双向数据流，即可读可写
- * 
- * @param o - 选项式定义的Vue组件
- * @example injectStore({ props: { modelValue: 0, } })
- */
-export declare function injectStore<PropsOptions extends Readonly<StoreProps>, RawBindings, D, C extends ComputedOptions = {}, M extends MethodOptions = {}, Mixin extends ComponentOptionsMixin = ComponentOptionsMixin, Extends extends ComponentOptionsMixin = ComponentOptionsMixin, E extends EmitsOptions = Record<string, any>, EE extends string = string>(options: ComponentOptionsWithObjectProps<StoreProps<PropsOptions>, RawBindings, D, C, M, Mixin, Extends, E, EE, ExtractPropTypes<PropsOptions> | ExtractStoreProperty<PropsOptions>>): DefineComponent<Array<keyof PropsOptions>, RawBindings, D, C, M, Mixin, Extends, E, EE>;
+// declare type ExtractStoreProperty<T> = 
+//   // T extends object ? ExtractStoreObject<T>
+//   T extends StoreObject<infer R> ? R  // 和上面几乎是一样的效果，交由 TS 自动推断泛型
+//   : T extends (value: infer U, ...args: any[]) => any ? U
+//   : T extends () => infer U ? U
+//   : T;
 
 /** 创建一个ee-vuex仓库 */
-export declare function createStore<T, R = StoreExt<ExtractStore<T>>, This = R>(store: ThisType<This> & Store<T>, option?: {
+export function createStore<T, R = StoreExt<ExtractStore<T>>, This = R>(store: ThisType<This> & Store<T>, option?: {
   /** 仓库名，设置仓库名可以全局通过 const { 仓库名 } = require('ee-vuex').default 获得仓库实例 */
   name?: string;
   /** 仓库定义的 get/set/默认值 方法调用时的this实例，默认为仓库实例 */
@@ -131,4 +206,4 @@ export declare function createStore<T, R = StoreExt<ExtractStore<T>>, This = R>(
    * @param store - 赋值的仓库实例
    */
   set?: (key: keyof T, value: any, store: R) => void;
-} | string) : R;
+} | string): R;
