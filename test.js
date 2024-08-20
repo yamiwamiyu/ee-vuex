@@ -20,34 +20,20 @@ const comp = injectStore({
         /** 测试 ee-vuex 属性 */
         test: {
             init: 5,
-            /** @param {string} v */
-            get(v) {
-                return v | 0;
+            get(value) {
+                
             }
         },
+        // withDefaultValue: ['1', '2'],
         /** 测试 vue 属性 */
         test2: String,
     },
     mounted() {
+        this.$props.
         // todo: get/set 函数的参数类型推断不正确
-        this.$emit('update:test', )
+        this.$emit('update:withDefaultValue', )
     }
 });
-
-defineComponent({
-    data() { return {} },
-    props: {
-        /** 注释 */
-        test: String,
-        /** 测试 vue 属性 */
-        test2: {
-            type: Number,
-        },
-    },
-    mounted() {
-        this.$props.test
-    }
-})
 
 const store = createStore({
     nulGet: {
@@ -59,6 +45,7 @@ const store = createStore({
         },
         set(value, set) {
         },
+        // aa: '这也行吗'
     },
     unknown() { return '' },
     test1() { return Date.now() },
@@ -78,5 +65,36 @@ const store = createStore({
     actions: {
         /** @param {number} a  */
         power(a) { return a * a; },
+    },
+})
+
+const store3 = createStore({
+    b: {
+        init: '',
+        get(value) {
+        },
+        set(value, set) {
+        },
+    },
+    get: {
+        /** @param {string} value  */
+        get(value) {
+        },
+    },
+    getWithoutParam: {
+        get() {
+            return 5;
+        }
+    },
+    set: {
+        /** @param {string} value  */
+        set(value) {
+        },
+    },
+    dev: 0,
+    getOnly() { return ' ' },
+    /** @param {string} val  */
+    setOnly(val) {},
+    nul: {
     },
 })
