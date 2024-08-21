@@ -1,8 +1,8 @@
-import { EmitsOptions, ComponentOptionsMixin, ComputedOptions, MethodOptions, Prop, ExtractPropTypes, SlotsType, ComponentInjectOptions, ObjectEmitsOptions, ExtractDefaultPropTypes, ComponentObjectPropsOptions, CreateComponentPublicInstance, ComponentOptionsBase, } from 'vue';
+import { EmitsOptions, ComponentOptionsMixin, ComputedOptions, MethodOptions, Prop, ExtractPropTypes, SlotsType, ComponentInjectOptions, ObjectEmitsOptions, ExtractDefaultPropTypes, ComponentObjectPropsOptions, CreateComponentPublicInstance, ComponentOptionsBase, DefineComponent, PublicProps } from 'vue';
 
-// type Prettify<T> = {
-//   [K in keyof T]: T[K];
-// } & {}
+type Prettify<T> = {
+  [K in keyof T]: T[K];
+} & {}
 
 /** Vue 定义的类型，但是没有加 export，只能复制出来 */
 type EmitsToProps<T extends EmitsOptions> = T extends string[] ? {
@@ -30,6 +30,8 @@ type FilterVueProps<T> = {
   [K in keyof T as K extends keyof FilterStoreProperty<T> ? never : K]: T[K];
 };
 
+type ExtractStore<T> = T extends Store<infer P> ? P : never;
+
 /**
  * 创建一个针对vue组件props的ee-vuex仓库
  * 
@@ -55,13 +57,22 @@ export function injectStore<
   S extends SlotsType = {},
   I extends ComponentInjectOptions = {},
   II extends string = string,
+
+  VueProps = ExtractPropTypes<FilterVueProps<PropsOptions>>,
+  StoreProps = ExtractStore<FilterStoreProperty<PropsOptions>>,
+  PrivateProps = VueProps & StoreProps,
+  Emits = E & StorePropertyToEmits<StoreProps>,
+  Props = Prettify<VueProps & StoreProps & EmitsToProps<Extract<Emits, ObjectEmitsOptions>>>,
+  Defaults = ExtractDefaultPropTypes<FilterVueProps<PropsOptions>>,
+  This = CreateComponentPublicInstance<Props, RawBindings, D & PrivateProps, C, M, Mixin, Extends, Required<Extract<Emits, ObjectEmitsOptions>>, Props, Defaults, false, I, S>
 >
   (
     options: ComponentOptionsWithStoreProps<PropsOptions, RawBindings, D, C, M, Mixin, Extends, E, EE, I, II, S>
-  ): any
+  ): Prettify<StoreProps>
+  // : DefineComponent<Props, RawBindings, D, C, M, Mixin, Extends, E, EE, PublicProps, ResolveProps<Props, E>, ExtractDefaultPropTypes<Props>, S>
 
 type ComponentOptionsWithStoreProps<
-  PropsOptions = ComponentObjectPropsOptions,
+  PropsOptions = ComponentObjectPropsOptions | { [x: string]: StorePropertyBase },
   RawBindings = {},
   D = {},
   C extends ComputedOptions = {},
@@ -78,13 +89,13 @@ type ComponentOptionsWithStoreProps<
   StoreProps = ExtractStore<FilterStoreProperty<PropsOptions>>,
   PrivateProps = VueProps & StoreProps,
   Emits = E & StorePropertyToEmits<StoreProps>,
-  PublicProps = VueProps & StoreProps & EmitsToProps<Extract<Emits, ObjectEmitsOptions>>,
+  Props = Prettify<VueProps & StoreProps & EmitsToProps<Extract<Emits, ObjectEmitsOptions>>>,
   Defaults = ExtractDefaultPropTypes<FilterVueProps<PropsOptions>>,
-  This = CreateComponentPublicInstance<PublicProps, RawBindings, D & PrivateProps, C, M, Mixin, Extends, Required<Extract<Emits, ObjectEmitsOptions>>, PublicProps, Defaults, false, I, S>
+  This = CreateComponentPublicInstance<Props, RawBindings, D & PrivateProps, C, M, Mixin, Extends, Required<Extract<Emits, ObjectEmitsOptions>>, Props, Defaults, false, I, S>
 >
-  = ComponentOptionsBase<PublicProps, RawBindings, D, C, M, Mixin, Extends, Extract<Emits, ObjectEmitsOptions>, EE, Defaults, I, II, S> & {
-    props: PropsOptions & ThisType<This>
-  } & ThisType<This>;
+  = ComponentOptionsBase<Props, RawBindings, D, C, M, Mixin, Extends, Extract<Emits, ObjectEmitsOptions>, EE, Defaults, I, II, S> & {
+    props: PropsOptions | ThisType<This>
+  } | ThisType<This>;
 
 
 // 上面是 injectStore 的内容

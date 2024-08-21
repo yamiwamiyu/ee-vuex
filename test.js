@@ -20,18 +20,19 @@ const comp = injectStore({
         /** 测试 ee-vuex 属性 */
         test: {
             init: 5,
-            get(value) {
-                
-            }
+            /** @param {number} value  */
+            // get(value) {}
+
         },
+        // testValue: 0,
         // withDefaultValue: ['1', '2'],
         /** 测试 vue 属性 */
         test2: String,
     },
     mounted() {
-        this.$props.
+        this.$props.test
         // todo: get/set 函数的参数类型推断不正确
-        this.$emit('update:withDefaultValue', )
+        // this.$emit('update:testValue', )
     }
 });
 

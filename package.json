@@ -21,6 +21,6 @@
   "author": "yamiwamiyu",
   "license": "MIT",
   "devDependencies": {
-    "vue": "^3.2.13"
+    "vue": "^3.4.38"
   }
 }
