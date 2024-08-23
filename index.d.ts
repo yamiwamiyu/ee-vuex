@@ -1,8 +1,8 @@
-import { EmitsOptions, ComponentOptionsMixin, ComputedOptions, MethodOptions, Prop, ExtractPropTypes, SlotsType, ComponentInjectOptions, ObjectEmitsOptions, ExtractDefaultPropTypes, ComponentObjectPropsOptions, CreateComponentPublicInstance, ComponentOptionsBase, DefineComponent, PublicProps } from 'vue';
+import { EmitsOptions, ComponentOptionsMixin, ComputedOptions, MethodOptions, SlotsType, ComponentInjectOptions, ObjectEmitsOptions, ComponentObjectPropsOptions, CreateComponentPublicInstance, ComponentOptionsBase, DefineComponent, PublicProps } from 'vue';
 
-type Prettify<T> = {
-  [K in keyof T]: T[K];
-} & {}
+// type Prettify<T> = {
+//   [K in keyof T]: T[K];
+// } & {}
 
 /** Vue 定义的类型，但是没有加 export，只能复制出来 */
 type EmitsToProps<T extends EmitsOptions> = T extends string[] ? {
@@ -11,24 +11,18 @@ type EmitsToProps<T extends EmitsOptions> = T extends string[] ? {
   [K in `on${Capitalize<string & keyof T>}`]?: K extends `on${infer C}` ? (...args: T[Uncapitalize<C>] extends (...args: infer P) => any ? P : T[Uncapitalize<C>] extends null ? any[] : never) => any : never;
 } : {};
 
-/** 从 props 和 ee-vuex 的状态定义中，筛选出 ee-vuex 的状态 */
-type FilterStoreProperty<T> = {
-  [K in keyof T as
-  // ee-vuex
-  T[K] extends StoreObject ? K :
-  // vue
-  T[K] extends Prop<infer _> ? never :
-  // ee-vuex 的 get/set/默认值
-  K]?: T[K];
-}
-/** 将 FilterStoreProperty 筛选后的状态生成对应事件 */
+/** 将状态生成对应事件 */
 type StorePropertyToEmits<T> = {
   [K in keyof T as `update:${string & K}`]: (value: T[K]) => any;
 }
-/** 从 vue 和 ee-vuex 的状态定义中，筛选出 vue 的状态 */
+
+type FilterStoreProperty<Vue, EEVueX> = {
+  [K in keyof EEVueX as K extends keyof FilterVueProps<Vue> ? never : K]: EEVueX[K];
+}
+
 type FilterVueProps<T> = {
-  [K in keyof T as K extends keyof FilterStoreProperty<T> ? never : K]: T[K];
-};
+  [K in keyof T as unknown extends T[K] ? never : K]: T[K];
+}
 
 type ExtractStore<T> = T extends Store<infer P> ? P : never;
 
@@ -45,7 +39,8 @@ type ExtractStore<T> = T extends Store<infer P> ? P : never;
  * @example injectStore({ props: { modelValue: 0, } })
  */
 export function injectStore<
-  PropsOptions = ComponentObjectPropsOptions | { [x: string]: StorePropertyBase },
+  EEVuexT = {},
+  VueT = {},
   RawBindings = {},
   D = {},
   C extends ComputedOptions = {},
@@ -58,21 +53,20 @@ export function injectStore<
   I extends ComponentInjectOptions = {},
   II extends string = string,
 
-  VueProps = ExtractPropTypes<FilterVueProps<PropsOptions>>,
-  StoreProps = ExtractStore<FilterStoreProperty<PropsOptions>>,
-  PrivateProps = VueProps & StoreProps,
+  VueProps = FilterVueProps<VueT>,
+  StoreProps = FilterStoreProperty<VueT, EEVuexT>,
+  // PrivateProps = VueProps & StoreProps,
   Emits = E & StorePropertyToEmits<StoreProps>,
-  Props = Prettify<VueProps & StoreProps & EmitsToProps<Extract<Emits, ObjectEmitsOptions>>>,
-  Defaults = ExtractDefaultPropTypes<FilterVueProps<PropsOptions>>,
-  This = CreateComponentPublicInstance<Props, RawBindings, D & PrivateProps, C, M, Mixin, Extends, Required<Extract<Emits, ObjectEmitsOptions>>, Props, Defaults, false, I, S>
+  Props = VueProps & StoreProps & EmitsToProps<Extract<Emits, ObjectEmitsOptions>>,
 >
   (
-    options: ComponentOptionsWithStoreProps<PropsOptions, RawBindings, D, C, M, Mixin, Extends, E, EE, I, II, S>
-  ): Prettify<StoreProps>
-  // : DefineComponent<Props, RawBindings, D, C, M, Mixin, Extends, E, EE, PublicProps, ResolveProps<Props, E>, ExtractDefaultPropTypes<Props>, S>
+    options: ComponentOptionsWithStoreProps<EEVuexT, VueT, RawBindings, D, C, M, Mixin, Extends, E, EE, I, II, S>
+  )//: Prettify<VueT>
+  : DefineComponent<{}, RawBindings, D, C, M, Mixin, Extends, E, EE, PublicProps, Props, {}, S>
 
 type ComponentOptionsWithStoreProps<
-  PropsOptions = ComponentObjectPropsOptions | { [x: string]: StorePropertyBase },
+  EEVuexT = {},
+  VueT = {},
   RawBindings = {},
   D = {},
   C extends ComputedOptions = {},
@@ -85,16 +79,17 @@ type ComponentOptionsWithStoreProps<
   II extends string = string,
   S extends SlotsType = {},
 
-  VueProps = ExtractPropTypes<FilterVueProps<PropsOptions>>,
-  StoreProps = ExtractStore<FilterStoreProperty<PropsOptions>>,
+  VueProps = FilterVueProps<VueT>,
+  StoreProps = FilterStoreProperty<VueT, EEVuexT>,
   PrivateProps = VueProps & StoreProps,
   Emits = E & StorePropertyToEmits<StoreProps>,
-  Props = Prettify<VueProps & StoreProps & EmitsToProps<Extract<Emits, ObjectEmitsOptions>>>,
-  Defaults = ExtractDefaultPropTypes<FilterVueProps<PropsOptions>>,
+  Props = VueProps & StoreProps & EmitsToProps<Extract<Emits, ObjectEmitsOptions>>,
+  // Defaults = ExtractDefaultPropTypes<FilterVueProps<PropsOptions>>,
+  Defaults = {},
   This = CreateComponentPublicInstance<Props, RawBindings, D & PrivateProps, C, M, Mixin, Extends, Required<Extract<Emits, ObjectEmitsOptions>>, Props, Defaults, false, I, S>
 >
   = ComponentOptionsBase<Props, RawBindings, D, C, M, Mixin, Extends, Extract<Emits, ObjectEmitsOptions>, EE, Defaults, I, II, S> & {
-    props: PropsOptions | ThisType<This>
+    props: ComponentObjectPropsOptions<VueT> | Store<EEVuexT> | ThisType<This>
   } | ThisType<This>;
 
 
@@ -184,7 +179,7 @@ type Computed<T> = {
   set?: ((value: T, set: (value: T) => void) => Promise<T> | T | void);
 }
 
-type StoreComputed<SO> = 
+type StoreComputed<SO> =
   SO extends StoreObject<infer T> ?
   // nil: {} 也会认为是 extends StoreObject<infer T> 此时 T = SO = {}
   // SO 约束为 StoreObject

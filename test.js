@@ -2,12 +2,12 @@ import { createStore, injectStore } from "./index.js";
 import { defineComponent } from "vue";
 
 const comp = injectStore({
-    data() {
-        return {
-            /** data 的注释 */
-            dataField: 0,
-        }
-    },
+    /**
+     * @type {import('vue').SlotsType<{
+     *  default: { value: string }
+     * }>}
+     */
+    slots: {},
     emits: {
         /** 
          * @param {number} value
@@ -20,18 +20,18 @@ const comp = injectStore({
         /** 测试 ee-vuex 属性 */
         test: {
             init: 5,
-            /** @param {number} value  */
-            // get(value) {}
-
+            get(value) {},
         },
-        // testValue: 0,
-        // withDefaultValue: ['1', '2'],
+        testValue: '',
         /** 测试 vue 属性 */
-        test2: String,
+        test2: [Number, String],
+        /** default value */
+        test3: {
+            default: () => [0],
+        }
     },
     mounted() {
-        this.$props.test
-        // todo: get/set 函数的参数类型推断不正确
+        // this.$props.
         // this.$emit('update:testValue', )
     }
 });
