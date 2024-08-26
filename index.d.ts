@@ -1,8 +1,8 @@
-import { EmitsOptions, ComponentOptionsMixin, ComputedOptions, MethodOptions, SlotsType, ComponentInjectOptions, ObjectEmitsOptions, ComponentObjectPropsOptions, CreateComponentPublicInstance, ComponentOptionsBase, DefineComponent, PublicProps } from 'vue';
+import { EmitsOptions, ComponentOptionsMixin, ComputedOptions, MethodOptions, SlotsType, ComponentInjectOptions, ObjectEmitsOptions, ComponentObjectPropsOptions, CreateComponentPublicInstance, ComponentOptionsBase, DefineComponent, PublicProps, Prop, PropType, ExtractPropTypes } from 'vue';
 
-// type Prettify<T> = {
-//   [K in keyof T]: T[K];
-// } & {}
+type Prettify<T> = {
+  [K in keyof T]: T[K];
+} & {}
 
 /** Vue 定义的类型，但是没有加 export，只能复制出来 */
 type EmitsToProps<T extends EmitsOptions> = T extends string[] ? {
@@ -16,15 +16,37 @@ type StorePropertyToEmits<T> = {
   [K in keyof T as `update:${string & K}`]: (value: T[K]) => any;
 }
 
-type FilterStoreProperty<Vue, EEVueX> = {
-  [K in keyof EEVueX as K extends keyof FilterVueProps<Vue> ? never : K]: EEVueX[K];
+type PropConstructor<T = any> = {
+  new(...args: any[]): T;
 }
+
+type FilterStoreProperty<T> = {
+  [K in keyof T as
+  // 包含 ee-vuex 对象字段
+  T[K] extends { init: any } | { get: any } | { set: any } | { p: any } ? K :
+  // 包含 vue 任意字段或 null
+  T[K] extends null | { type: any } | { required: any } | { validator: any } | { default: any } ? never :
+  // 值为类型构造函数，例如 Number，或 [Number, String]。但同时 () => string 也符合
+  T[K] extends PropType<any> ?
+  (
+    // 值为 PropType<*>
+    PropConstructor extends T[K] ? never :
+    // 值为构造函数写法
+    T[K] extends PropConstructor | PropConstructor[] ? never :
+    // 值为 get/set 的简便写法
+    K
+  ) :
+  // 任意类型的值
+  K
+  ]: T[K] extends StoreProperty<infer R> ? R : never;
+}
+
+function getOnly() { return ''}
+type test1 = typeof getOnly extends StoreProperty<infer P> ? P : never;
 
 type FilterVueProps<T> = {
-  [K in keyof T as unknown extends T[K] ? never : K]: T[K];
+  [K in keyof T as K extends keyof FilterStoreProperty<T> ? never : K]: T[K] extends Prop<infer R> ? R : never;
 }
-
-type ExtractStore<T> = T extends Store<infer P> ? P : never;
 
 /**
  * 创建一个针对vue组件props的ee-vuex仓库
@@ -41,6 +63,7 @@ type ExtractStore<T> = T extends Store<infer P> ? P : never;
 export function injectStore<
   EEVuexT = {},
   VueT = {},
+  PropOptions = {},
   RawBindings = {},
   D = {},
   C extends ComputedOptions = {},
@@ -53,20 +76,18 @@ export function injectStore<
   I extends ComponentInjectOptions = {},
   II extends string = string,
 
-  VueProps = FilterVueProps<VueT>,
-  StoreProps = FilterStoreProperty<VueT, EEVuexT>,
-  // PrivateProps = VueProps & StoreProps,
-  Emits = E & StorePropertyToEmits<StoreProps>,
-  Props = VueProps & StoreProps & EmitsToProps<Extract<Emits, ObjectEmitsOptions>>,
+  VueProps = FilterVueProps<PropOptions>,
+  StoreProps = FilterStoreProperty<PropOptions>,
 >
   (
-    options: ComponentOptionsWithStoreProps<EEVuexT, VueT, RawBindings, D, C, M, Mixin, Extends, E, EE, I, II, S>
-  )//: Prettify<VueT>
-  : DefineComponent<{}, RawBindings, D, C, M, Mixin, Extends, E, EE, PublicProps, Props, {}, S>
+    options: ComponentOptionsWithStoreProps<EEVuexT, VueT, PropOptions, RawBindings, D, C, M, Mixin, Extends, E, EE, I, II, S>
+  ): Prettify<PropOptions>
+// : DefineComponent<{}, RawBindings, D, C, M, Mixin, Extends, E, EE, PublicProps, Props, {}, S>
 
 type ComponentOptionsWithStoreProps<
   EEVuexT = {},
   VueT = {},
+  PropOptions = ComponentObjectPropsOptions | Store<any>,
   RawBindings = {},
   D = {},
   C extends ComputedOptions = {},
@@ -79,17 +100,17 @@ type ComponentOptionsWithStoreProps<
   II extends string = string,
   S extends SlotsType = {},
 
-  VueProps = FilterVueProps<VueT>,
-  StoreProps = FilterStoreProperty<VueT, EEVuexT>,
+  VueProps = FilterVueProps<PropOptions>,
+  StoreProps = FilterStoreProperty<PropOptions>,
   PrivateProps = VueProps & StoreProps,
   Emits = E & StorePropertyToEmits<StoreProps>,
   Props = VueProps & StoreProps & EmitsToProps<Extract<Emits, ObjectEmitsOptions>>,
   // Defaults = ExtractDefaultPropTypes<FilterVueProps<PropsOptions>>,
   Defaults = {},
-  This = CreateComponentPublicInstance<Props, RawBindings, D & PrivateProps, C, M, Mixin, Extends, Required<Extract<Emits, ObjectEmitsOptions>>, Props, Defaults, false, I, S>
+  This = CreateComponentPublicInstance<Props, RawBindings, D & PrivateProps, C, M, Mixin, Extends, Required<Extract<Emits, ObjectEmitsOptions>>, Props, Defaults, false, I, S>,
 >
   = ComponentOptionsBase<Props, RawBindings, D, C, M, Mixin, Extends, Extract<Emits, ObjectEmitsOptions>, EE, Defaults, I, II, S> & {
-    props: ComponentObjectPropsOptions<VueT> | Store<EEVuexT> | ThisType<This>
+    props: PropOptions | ComponentObjectPropsOptions<VueT> | Store<EEVuexT> | ThisType<This>
   } | ThisType<This>;
 
 

@@ -244,6 +244,8 @@ export default injectStore({
 ```
 Props can be defined using either the original definition of props or the [Definition Method](#definition-core) in ee-vuex
 
+`injectStore` has more comprehensive type prompts than `defineComponent`, so it is not recommended to mix two definition methods in one state
+
 The ee-vuex form of props is **read-write** **bidirectional**, and the usage method is as follows
 
 - Component internal: props become writable and can be directly assigned values

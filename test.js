@@ -1,7 +1,16 @@
 import { createStore, injectStore } from "./index.js";
 import { defineComponent } from "vue";
 
+async function testAsyncFunc() {
+    /** @type {number} */
+    const value = await new Promise(resolve => {
+        resolve(5);
+    });
+    return value;
+}
+
 const comp = injectStore({
+    data(){return {}},
     /**
      * @type {import('vue').SlotsType<{
      *  default: { value: string }
@@ -22,16 +31,25 @@ const comp = injectStore({
             init: 5,
             get(value) {},
         },
-        testValue: '',
         /** 测试 vue 属性 */
         test2: [Number, String],
-        /** default value */
+        test22: String,
         test3: {
-            default: () => [0],
-        }
+            default: testAsyncFunc,
+            get(value) {},
+        },
+        getOnly() {
+            return '';
+        },
+        setOnly(value, set) {
+            return ''
+        },
+        /** @type {import('vue').PropType<{test:string}>} */
+        vueOnly: null,
+        vueOnly2: {  }
     },
     mounted() {
-        // this.$props.
+        this.$props.
         // this.$emit('update:testValue', )
     }
 });
@@ -67,6 +85,7 @@ const store = createStore({
         /** @param {number} a  */
         power(a) { return a * a; },
     },
+    dvalue: () => [0],
 })
 
 const store3 = createStore({

@@ -225,7 +225,7 @@ export default injectStore({
       // ee-vuex: get, set, p, init, default
       // vue: type, required, validator, default
       type: Number,
-      // default两种方式都有，在没有get, set, p时仅vue生效
+      // default两种方式都有，在没有get, set, p, init时仅vue生效
       default: 0,
       // 包含了get，所以count就是ee-vuex的定义方式了
       get() {},
@@ -236,6 +236,8 @@ export default injectStore({
 })
 ```
 props 既可以使用原本 props 的定义方式，也可以使用 ee-vuex 中的[定义方式](#定义核心)
+
+`injectStore` 有着比 `defineComponent` 更完善的类型提示，所以不建议在一个状态中混用两种定义方式
 
 ee-vuex 形式的 props 是 **可读写的** **双向的**，使用方法如下
 
