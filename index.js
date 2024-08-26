@@ -12,12 +12,6 @@ const types = [
   Symbol,
 ]
 
-function isEmpty(obj) {
-  for (const key in obj)
-    return false;
-  return true;
-}
-
 /** 判断两个值是否相同，相同时不重复赋值 */
 function isEquals(v1, v2) {
   if (isReactive(v1))
@@ -322,7 +316,7 @@ export function injectStore(o) {
         // vuex: 包含 get/set/p/init 任意一个字段或空对象
         // vue : 仅包含 type, required, validator, default 字段的对象
         if (v.constructor == Object) {
-          const isProp = ((v.type || v.required || v.validator || v.default) 
+          const isProp = ((v.hasOwnProperty('type') || v.hasOwnProperty('required') || v.validator || v.hasOwnProperty('default')) 
             && !v.get && !v.set && !v.hasOwnProperty('p') && !v.hasOwnProperty('init'));
           if (isProp) {
             oprops[key] = v;

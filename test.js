@@ -49,8 +49,11 @@ const comp = injectStore({
         vueOnly2: {  }
     },
     mounted() {
-        this.$props.
-        // this.$emit('update:testValue', )
+        // this.$props.
+        // this.$emit('', )
+    },
+    setup(props, ctx) {
+        ctx.emit('')
     }
 });
 

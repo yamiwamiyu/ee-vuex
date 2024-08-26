@@ -41,11 +41,13 @@ type FilterStoreProperty<T> = {
   ]: T[K] extends StoreProperty<infer R> ? R : never;
 }
 
-function getOnly() { return ''}
-type test1 = typeof getOnly extends StoreProperty<infer P> ? P : never;
-
 type FilterVueProps<T> = {
   [K in keyof T as K extends keyof FilterStoreProperty<T> ? never : K]: T[K] extends Prop<infer R> ? R : never;
+}
+
+/** 用于 ComponentOptionsBase<T>，主要是 setup 传入的 props，因为 setup 用得少，所以类型不保证完全正确 */
+type ComponentOptionsBaseProps<VueT, EEVuexT> = {
+  [K in keyof VueT]: unknown extends VueT[K] ? EEVuexT[K] : VueT[K];
 }
 
 /**
@@ -78,40 +80,23 @@ export function injectStore<
 
   VueProps = FilterVueProps<PropOptions>,
   StoreProps = FilterStoreProperty<PropOptions>,
->
-  (
-    options: ComponentOptionsWithStoreProps<EEVuexT, VueT, PropOptions, RawBindings, D, C, M, Mixin, Extends, E, EE, I, II, S>
-  ): Prettify<PropOptions>
-// : DefineComponent<{}, RawBindings, D, C, M, Mixin, Extends, E, EE, PublicProps, Props, {}, S>
-
-type ComponentOptionsWithStoreProps<
-  EEVuexT = {},
-  VueT = {},
-  PropOptions = ComponentObjectPropsOptions | Store<any>,
-  RawBindings = {},
-  D = {},
-  C extends ComputedOptions = {},
-  M extends MethodOptions = {},
-  Mixin extends ComponentOptionsMixin = ComponentOptionsMixin,
-  Extends extends ComponentOptionsMixin = ComponentOptionsMixin,
-  E extends ObjectEmitsOptions = {},
-  EE extends string = string,
-  I extends ComponentInjectOptions = {},
-  II extends string = string,
-  S extends SlotsType = {},
-
-  VueProps = FilterVueProps<PropOptions>,
-  StoreProps = FilterStoreProperty<PropOptions>,
   PrivateProps = VueProps & StoreProps,
   Emits = E & StorePropertyToEmits<StoreProps>,
   Props = VueProps & StoreProps & EmitsToProps<Extract<Emits, ObjectEmitsOptions>>,
   // Defaults = ExtractDefaultPropTypes<FilterVueProps<PropsOptions>>,
   Defaults = {},
   This = CreateComponentPublicInstance<Props, RawBindings, D & PrivateProps, C, M, Mixin, Extends, Required<Extract<Emits, ObjectEmitsOptions>>, Props, Defaults, false, I, S>,
+
+  AnotherProps = ComponentOptionsBaseProps<VueT, EEVuexT> & EmitsToProps<Extract<Emits, ObjectEmitsOptions>>,
 >
-  = ComponentOptionsBase<Props, RawBindings, D, C, M, Mixin, Extends, Extract<Emits, ObjectEmitsOptions>, EE, Defaults, I, II, S> & {
-    props: PropOptions | ComponentObjectPropsOptions<VueT> | Store<EEVuexT> | ThisType<This>
-  } | ThisType<This>;
+  (
+    // Props 使用 Props 无法获得 props 属性，但仅作用在 setup 的第一个参数，其实无所谓
+    // E 使用 Emits 无法获得 ee-vuex 的事件，但仅作用在 setup 的第二个参数，其实无所谓
+    options: ComponentOptionsBase<AnotherProps, RawBindings, D, C, M, Mixin, Extends, Extract<E & StorePropertyToEmits<StoreProps>, ObjectEmitsOptions>, EE, Defaults, I, II, S> & {
+      props: PropOptions | ComponentObjectPropsOptions<VueT> | Store<EEVuexT> | ThisType<This>
+    } | ThisType<This>
+  )//: Prettify<AnotherProps>
+  : DefineComponent<{}, RawBindings, D, C, M, Mixin, Extends, E, EE, PublicProps, Props, {}, S>
 
 
 // 上面是 injectStore 的内容
