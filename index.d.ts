@@ -1,4 +1,4 @@
-import { EmitsOptions, ComponentOptionsMixin, ComputedOptions, MethodOptions, SlotsType, ComponentInjectOptions, ObjectEmitsOptions, ComponentObjectPropsOptions, CreateComponentPublicInstance, ComponentOptionsBase, DefineComponent, PublicProps, Prop, PropType, ExtractPropTypes } from 'vue';
+import { EmitsOptions, ComponentOptionsMixin, ComputedOptions, MethodOptions, SlotsType, ComponentInjectOptions, ObjectEmitsOptions, ComponentObjectPropsOptions, CreateComponentPublicInstance, ComponentOptionsBase, DefineComponent, PublicProps, Prop, PropType } from 'vue';
 
 type Prettify<T> = {
   [K in keyof T]: T[K];
@@ -38,16 +38,21 @@ type FilterStoreProperty<T> = {
   ) :
   // 任意类型的值
   K
-  ]: T[K] extends StoreProperty<infer R> ? R : never;
+  ]
+  : T[K] extends StorePropertyBase<infer R> ? R & {}
+  : T[K] extends Computed<infer R> ? R
+  : T[K];
 }
 
 type FilterVueProps<T> = {
   [K in keyof T as K extends keyof FilterStoreProperty<T> ? never : K]: T[K] extends Prop<infer R> ? R : never;
 }
 
-/** 用于 ComponentOptionsBase<T>，主要是 setup 传入的 props，因为 setup 用得少，所以类型不保证完全正确 */
-type ComponentOptionsBaseProps<VueT, EEVuexT> = {
-  [K in keyof VueT]: unknown extends VueT[K] ? EEVuexT[K] : VueT[K];
+/** 用于 ComponentOptionsBase<T>，主要是 setup 传入的 props 和 data 的 this.$props，因为 setup 用得少，所以类型不保证完全正确
+ * 在 data 和 setup 中，ee-vuex 的状态还未初始化，所以不能调用 ee-vuex 的 props
+ */
+type ComponentOptionsBaseProps<VueT> = {
+  [K in keyof VueT as unknown extends VueT[K] ? never : K]: VueT[K]
 }
 
 /**
@@ -64,6 +69,8 @@ type ComponentOptionsBaseProps<VueT, EEVuexT> = {
  */
 export function injectStore<
   EEVuexT = {},
+  EEVuexC = {},
+  EEVuexD = {},
   VueT = {},
   PropOptions = {},
   RawBindings = {},
@@ -87,17 +94,16 @@ export function injectStore<
   Defaults = {},
   This = CreateComponentPublicInstance<Props, RawBindings, D & PrivateProps, C, M, Mixin, Extends, Required<Extract<Emits, ObjectEmitsOptions>>, Props, Defaults, false, I, S>,
 
-  AnotherProps = ComponentOptionsBaseProps<VueT, EEVuexT> & EmitsToProps<Extract<Emits, ObjectEmitsOptions>>,
+  AnotherProps = ComponentOptionsBaseProps<VueT>,
 >
   (
     // Props 使用 Props 无法获得 props 属性，但仅作用在 setup 的第一个参数，其实无所谓
     // E 使用 Emits 无法获得 ee-vuex 的事件，但仅作用在 setup 的第二个参数，其实无所谓
     options: ComponentOptionsBase<AnotherProps, RawBindings, D, C, M, Mixin, Extends, Extract<E & StorePropertyToEmits<StoreProps>, ObjectEmitsOptions>, EE, Defaults, I, II, S> & {
-      props: PropOptions | ComponentObjectPropsOptions<VueT> | Store<EEVuexT> | ThisType<This>
+      props: PropOptions | ComponentObjectPropsOptions<VueT> | Store<EEVuexT, EEVuexC, EEVuexD> | ThisType<This>
     } | ThisType<This>
   )//: Prettify<AnotherProps>
   : DefineComponent<{}, RawBindings, D, C, M, Mixin, Extends, E, EE, PublicProps, Props, {}, S>
-
 
 // 上面是 injectStore 的内容
 // 以下是 createStore 的内容
@@ -155,21 +161,27 @@ type StoreExt<T> = T & {
   getAsync: <K extends keyof T>(key: K) => AsyncState<T[K]>;
 }
 
-/** 仓库 */
-type Store<T> = {
-  [K in keyof T]: StoreProperty<T[K]>;
+type GT<T> = {
+  [K in keyof T]: StorePropertyBase<T[K]>
 }
 
-type StorePropertyBase<T = any> = StoreComputed<StoreObject<T>>
-  // 0 个参数代表 get / 1 或 2 参函数代表 set
-  | ((value: T, set: (value: any) => any) => Promise<T> | T | void);
+/** 仓库 */
+type Store<T, C, D> = {
+  [K in keyof T]: StorePropertyBase<T[K]>;
+} | ({
+  [K in keyof C]: StoreComputed<T[Extract<K, keyof T>], C[K]>
+} & {
+  [K in keyof D]: D[K]
+})
 
-/** 仓库中的一个状态 */
-type StoreProperty<T = any> = StorePropertyBase<T> | T;
+type StorePropertyBase<T> = StoreObject<T>
+  // 0 个参数代表 get / 1 或 2 参函数代表 set
+  // | ((...args: any[]) => Promise<T> | T)
+  | ((value: T, set: (value: any) => void, ...args: any[]) => Promise<T> | T | void)
 
 // bug: get 或 set 中的 value 推断出了 T 类型，可是实际写调用 value 却又被识别为 any
 // ThisType<T> 导致的，使用 ThisType 使用 | 而不是使用 &
-interface StoreObject<T = any> {
+type StoreObject<T = any> = {
   /** 是否持久化到localStorage，持久化的key默认为当前属性名 */
   p?: boolean | number;
   /** 简单默认值，不支持异步，当 default 异步时作为返回前的值使用 */
@@ -185,18 +197,44 @@ type Computed<T> = {
   set?: ((value: T, set: (value: T) => void) => Promise<T> | T | void);
 }
 
-type StoreComputed<SO> =
-  SO extends StoreObject<infer T> ?
-  // nil: {} 也会认为是 extends StoreObject<infer T> 此时 T = SO = {}
-  // SO 约束为 StoreObject
-  T extends SO ? SO & Computed<T> :
-  SO & Computed<T> : never;
+type StoreComputed<SO, T> = unknown extends SO ? Computed<T> : Computed<SO>;
 
 /** 创建一个ee-vuex仓库
  * @param store - 仓库状态
  * @param option - 仓库详细配置或全局仓库名
+ * @example
+ * import { createStore } from 'ee-vuex'
+ * createStore({
+ *   vuexObj1: {
+ *     p: true,
+ *     init: 0,
+ *     default: 1,
+ *     get(value) { },
+ *     set(value, set) { },
+ *   },
+ *   vuexObj2: {
+ *     account: '',
+ *     password: '',
+ *     age: 18,
+ *   },
+ *   vuexDefault1: 0,
+ *   vuexDefault2: () => 0,
+ *   vuexDefault3: async () => await 0,
+ *   vuexGet1() { return 0 },
+ *   async vuexGet2() { return await 0 },
+ *   vuexSet1(value: number, set) { },
+ *   // ts bug: value 虽然被认定为 any，但是必须手写 :any
+ *   vuexSet2(value: unknown, set) { return 0 },
+ *   async vuexSet3(value: number, set) { return await value * value },
+ * })
  */
-export function createStore<T, R = StoreExt<T>, This = R>(store: ThisType<This> | Store<T>, option?: {
+export function createStore<T, C, D, RT = {
+  [K in keyof C]: unknown extends T[Extract<K, keyof T>] ?
+  unknown extends C[K] ?
+  D[Extract<K, keyof D>] :
+  C[K] :
+  T[Extract<K, keyof T>]
+}, R = StoreExt<RT>, This = R>(store: ThisType<This> | Store<T, C, D>, option?: {
   /** 仓库名
    * 
    * (推荐：拥有类型推断) 不设置全局仓库名，使用时导入仓库

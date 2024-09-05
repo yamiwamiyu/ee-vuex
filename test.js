@@ -10,7 +10,9 @@ async function testAsyncFunc() {
 }
 
 const comp = injectStore({
-    data(){return {}},
+    data() {
+        return {} 
+    },
     /**
      * @type {import('vue').SlotsType<{
      *  default: { value: string }
@@ -22,31 +24,39 @@ const comp = injectStore({
          * @param {number} value
          * @param {string} value2 
          */
-        click: (value, value2) => {},
-        'update:modelValue': () => {},
+        click: (value, value2) => { },
+        'update:modelValue': () => { },
     },
     props: {
-        /** 测试 ee-vuex 属性 */
-        test: {
-            init: 5,
-            get(value) {},
-        },
+        /** @type {import('vue').PropType<{test:string}>} */
+        vueNull: null,
         /** 测试 vue 属性 */
-        test2: [Number, String],
-        test22: String,
-        test3: {
-            default: testAsyncFunc,
-            get(value) {},
+        vueConsArr: [Number, String],
+        vueCons: String,
+
+        /** 测试 ee-vuex 属性 */
+        vuexInit: {
+            init: { account: 'a', password: 'b' },
+
+            get(value) { },
         },
-        getOnly() {
+        vuexDefault: {
+            default: testAsyncFunc,
+            get(value) { },
+        },
+        vuexGet() {
             return '';
         },
-        setOnly(value, set) {
+        /** @param {unknown} value */
+        vuexSet(value, set) {
             return ''
         },
-        /** @type {import('vue').PropType<{test:string}>} */
-        vueOnly: null,
-        vueOnly2: {  }
+        vuexGetOnly: { get() { return 5 } },
+        vuexSetOnly: { 
+            /** @param {string} value */
+            set(value) { }
+        },
+        vuexNilObj: {}
     },
     mounted() {
         // this.$props.
@@ -59,7 +69,7 @@ const comp = injectStore({
 
 const store = createStore({
     nulGet: {
-        get() {}
+        get() { }
     },
     hasGet: {
         init: '',
@@ -92,32 +102,15 @@ const store = createStore({
 })
 
 const store3 = createStore({
-    b: {
-        init: '',
-        get(value) {
-        },
-        set(value, set) {
-        },
+    vuexDefault: () => 'abc',
+    vuexGet() { return 'abc' },
+    vuexSet(value, set) { return ''; },
+    /** @param {boolean} value */
+    vuexSet2(value, set) {},
+    vuexGetOnly: { get() { return 5 } },
+    vuexSetOnly: { 
+        /** @param {string} value */
+        set(value) { }
     },
-    get: {
-        /** @param {string} value  */
-        get(value) {
-        },
-    },
-    getWithoutParam: {
-        get() {
-            return 5;
-        }
-    },
-    set: {
-        /** @param {string} value  */
-        set(value) {
-        },
-    },
-    dev: 0,
-    getOnly() { return ' ' },
-    /** @param {string} val  */
-    setOnly(val) {},
-    nul: {
-    },
+    vuexNilObj: {}
 })
