@@ -66,7 +66,6 @@ type ComponentOptionsBaseProps<VueT> = {
 export function injectStore<
   EEVuexT = {},
   EEVuexC = {},
-  EEVuexD = {},
   VueT = {},
   PropOptions = {},
   RawBindings = {},
@@ -96,7 +95,7 @@ export function injectStore<
     // Props 使用 Props 无法获得 props 属性，但仅作用在 setup 的第一个参数，其实无所谓
     // E 使用 Emits 无法获得 ee-vuex 的事件，但仅作用在 setup 的第二个参数，其实无所谓
     options: ComponentOptionsBase<AnotherProps, RawBindings, D, C, M, Mixin, Extends, Extract<E & StorePropertyToEmits<StoreProps>, ObjectEmitsOptions>, EE, Defaults, I, II, S> & {
-      props: PropOptions | ComponentObjectPropsOptions<VueT> | Store<EEVuexT, EEVuexC, EEVuexD> | ThisType<This>
+      props: PropOptions | ComponentObjectPropsOptions<VueT> | Store<EEVuexT, EEVuexC, {}> | ThisType<This>
     } | ThisType<This>
   )//: Prettify<AnotherProps>
   : DefineComponent<{}, RawBindings, D, C, M, Mixin, Extends, E, EE, PublicProps, Props, {}, S>
