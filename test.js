@@ -11,7 +11,7 @@ async function testAsyncFunc() {
 
 const comp = injectStore({
     data() {
-        return {} 
+        return {}
     },
     /**
      * @type {import('vue').SlotsType<{
@@ -52,11 +52,11 @@ const comp = injectStore({
             return ''
         },
         vuexGetOnly: { get() { return 5 } },
-        vuexSetOnly: { 
+        vuexSetOnly: {
             /** @param {string} value */
             set(value) { }
         },
-        vuexNilObj: {}
+        vuexNilObj: {},
     },
     mounted() {
         // this.$props.
@@ -102,15 +102,23 @@ const store = createStore({
 })
 
 const store3 = createStore({
-    vuexDefault: () => 'abc',
-    vuexGet() { return 'abc' },
-    vuexSet(value, set) { return ''; },
-    /** @param {boolean} value */
-    vuexSet2(value, set) {},
+    vuexInit: 1,
+    vuexNilObj: {},
+    // vuexDefault: () => 'abc',
+    // vuexGet() { return 'abc' },
+    // // 下面注释掉，就会触发 TS 的 bug 导致函数相关类型推导不正确
+    // /** @param {} value  */
+    // vuexSet(value, set) { return ''; },
+    // /** @param {boolean} value */
+    // vuexSet2(value, set) { },
     vuexGetOnly: { get() { return 5 } },
-    vuexSetOnly: { 
+    vuexSetOnly: {
         /** @param {string} value */
         set(value) { }
     },
-    vuexNilObj: {}
+    vuexObj: { init: '' },
+    vuexFull: {
+        init: { a: '', b: 0 },
+        set(value, set) {}
+    },
 })

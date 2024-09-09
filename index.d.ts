@@ -1,9 +1,5 @@
 import { EmitsOptions, ComponentOptionsMixin, ComputedOptions, MethodOptions, SlotsType, ComponentInjectOptions, ObjectEmitsOptions, ComponentObjectPropsOptions, CreateComponentPublicInstance, ComponentOptionsBase, DefineComponent, PublicProps, Prop, PropType } from 'vue';
 
-type Prettify<T> = {
-  [K in keyof T]: T[K];
-} & {}
-
 /** Vue 定义的类型，但是没有加 export，只能复制出来 */
 type EmitsToProps<T extends EmitsOptions> = T extends string[] ? {
   [K in `on${Capitalize<T[number]>}`]?: (...args: any[]) => any;
@@ -105,6 +101,11 @@ export function injectStore<
   )//: Prettify<AnotherProps>
   : DefineComponent<{}, RawBindings, D, C, M, Mixin, Extends, E, EE, PublicProps, Props, {}, S>
 
+// type Prettify<T> = {
+//   [K in keyof T]: T[K];
+// } & {}
+
+
 // 上面是 injectStore 的内容
 // 以下是 createStore 的内容
 
@@ -161,18 +162,12 @@ type StoreExt<T> = T & {
   getAsync: <K extends keyof T>(key: K) => AsyncState<T[K]>;
 }
 
-type GT<T> = {
-  [K in keyof T]: StorePropertyBase<T[K]>
-}
-
 /** 仓库 */
 type Store<T, C, D> = {
   [K in keyof T]: StorePropertyBase<T[K]>;
-} | ({
-  [K in keyof C]: StoreComputed<T[Extract<K, keyof T>], C[K]>
-} & {
-  [K in keyof D]: D[K]
-})
+} | {
+  [K in keyof C]: StoreComputed<T[K & keyof T], C[K]>;
+} | D;
 
 type StorePropertyBase<T> = StoreObject<T>
   // 0 个参数代表 get / 1 或 2 参函数代表 set
@@ -192,9 +187,9 @@ type StoreObject<T = any> = {
 
 type Computed<T> = {
   /** 获取属性值 */
-  get?: ((value: T) => Promise<T> | T | void),
+  get?(value: T): Promise<T> | T | void,
   /** 设置属性值 */
-  set?: ((value: T, set: (value: T) => void) => Promise<T> | T | void);
+  set?(value: T, set: (value: T) => void): Promise<T> | T | void;
 }
 
 type StoreComputed<SO, T> = unknown extends SO ? Computed<T> : Computed<SO>;
@@ -229,11 +224,11 @@ type StoreComputed<SO, T> = unknown extends SO ? Computed<T> : Computed<SO>;
  * })
  */
 export function createStore<T, C, D, RT = {
-  [K in keyof C]: unknown extends T[Extract<K, keyof T>] ?
+  [K in keyof C]: unknown extends T[K & keyof T] ?
   unknown extends C[K] ?
-  D[Extract<K, keyof D>] :
+  D[K & keyof D] :
   C[K] :
-  T[Extract<K, keyof T>]
+  T[K & keyof T]
 }, R = StoreExt<RT>, This = R>(store: ThisType<This> | Store<T, C, D>, option?: {
   /** 仓库名
    * 
