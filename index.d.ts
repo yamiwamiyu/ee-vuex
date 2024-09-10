@@ -82,12 +82,11 @@ export function injectStore<
 
   VueProps = FilterVueProps<PropOptions>,
   StoreProps = FilterStoreProperty<PropOptions>,
-  PrivateProps = VueProps & StoreProps,
   Emits = E & StorePropertyToEmits<StoreProps>,
   Props = Partial<VueProps & StoreProps> & EmitsToProps<Extract<Emits, ObjectEmitsOptions>>,
   // Defaults = ExtractDefaultPropTypes<FilterVueProps<PropsOptions>>,
   Defaults = {},
-  This = CreateComponentPublicInstance<Props, RawBindings, D & PrivateProps, C, M, Mixin, Extends, Required<Extract<Emits, ObjectEmitsOptions>>, Props, Defaults, false, I, S>,
+  This = CreateComponentPublicInstance<Props, RawBindings, D & StoreProps, C, M, Mixin, Extends, Required<Extract<Emits, ObjectEmitsOptions>>, Props, Defaults, false, I, S>,
 
   AnotherProps = ComponentOptionsBaseProps<VueT>,
 >
