@@ -97,7 +97,7 @@ export function injectStore<
       props: PropOptions | ComponentObjectPropsOptions<VueT> | Store<EEVuexT, EEVuexC, {}> | ThisType<This>
     } | ThisType<This>
   )//: Prettify<AnotherProps>
-  : DefineComponent<{}, RawBindings, D, C, M, Mixin, Extends, Emits, EE, PublicProps, Props, {}, S>
+  : DefineComponent<{}, RawBindings, D, C, M, Mixin, Extends, Required<Emits>, EE, PublicProps, Props, {}, S>
 
 // type Prettify<T> = {
 //   [K in keyof T]: T[K];
