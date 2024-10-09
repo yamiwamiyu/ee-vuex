@@ -1,4 +1,4 @@
-import { EmitsOptions, ComponentOptionsMixin, ComputedOptions, MethodOptions, SlotsType, ComponentInjectOptions, ObjectEmitsOptions, ComponentObjectPropsOptions, CreateComponentPublicInstance, ComponentOptionsBase, DefineComponent, PublicProps, Prop, PropType } from 'vue';
+import { EmitsOptions, ComponentOptionsMixin, ComputedOptions, MethodOptions, SlotsType, ComponentInjectOptions, ObjectEmitsOptions, ComponentObjectPropsOptions, CreateComponentPublicInstance, ComponentOptionsBase, DefineComponent, PublicProps, Prop, PropType, ExtractPropTypes } from 'vue';
 
 /** Vue 定义的类型，但是没有加 export，只能复制出来 */
 type EmitsToProps<T extends EmitsOptions> = T extends string[] ? {
@@ -40,9 +40,11 @@ type FilterStoreProperty<T> = {
   : T[K];
 }
 
-type FilterVueProps<T> = {
-  [K in keyof T as K extends keyof FilterStoreProperty<T> ? never : K]: T[K] extends Prop<infer R> ? R : never;
-}
+// ExtractPropTypes 中必有的属性为 required: true, boolean, default
+// 在生成文档时，其实只有 required: true 才是要求必填，自带默认值不应该必填
+type FilterVueProps<T> = { [K in keyof ExtractPropTypes<{
+  [K in keyof T as K extends keyof FilterStoreProperty<T> ? never : K]: T[K];
+}>]: T[K & keyof T] extends Prop<infer P> ? P : never; }
 
 /** 用于 ComponentOptionsBase<T>，主要是 setup 传入的 props 和 data 的 this.$props，因为 setup 用得少，所以类型不保证完全正确
  * 在 data 和 setup 中，ee-vuex 的状态还未初始化，所以不能调用 ee-vuex 的 props
