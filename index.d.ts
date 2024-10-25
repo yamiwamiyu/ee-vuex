@@ -229,7 +229,7 @@ export function createStore<T, C, D, RT = {
   D[K & keyof D] :
   C[K] :
   T[K & keyof T]
-}, R = StoreExt<RT>, This = R>(store: ThisType<This> | Store<T, C, D> & ThisType<This>, option?: {
+}, R = StoreExt<RT>, This = R>(store: ThisType<This> | Store<T, C, D>, option?: {
   /** 仓库名
    * 
    * (推荐：拥有类型推断) 不设置全局仓库名，使用时导入仓库
