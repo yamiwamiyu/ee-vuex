@@ -33,6 +33,11 @@ const comp = injectStore({
         /** 测试 vue 属性 */
         vueConsArr: [Number, String],
         vueCons: String,
+        bool: Boolean,
+        required: {
+            type: String,
+            required: true,
+        },
 
         /** 测试 ee-vuex 属性 */
         vuexInit: {
@@ -66,6 +71,11 @@ const comp = injectStore({
         ctx.emit('')
     }
 });
+
+/** @type {InstanceType<typeof comp>['$props']} */
+const a = {
+
+}
 
 const store = createStore({
     nulGet: {

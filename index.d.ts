@@ -1,4 +1,4 @@
-import { EmitsOptions, ComponentOptionsMixin, ComputedOptions, MethodOptions, SlotsType, ComponentInjectOptions, ObjectEmitsOptions, ComponentObjectPropsOptions, CreateComponentPublicInstance, ComponentOptionsBase, DefineComponent, PublicProps, Prop, PropType, ExtractPropTypes } from 'vue';
+import { EmitsOptions, ComponentOptionsMixin, ComputedOptions, MethodOptions, SlotsType, ComponentInjectOptions, ObjectEmitsOptions, ComponentObjectPropsOptions, CreateComponentPublicInstance, ComponentOptionsBase, DefineComponent, PublicProps, Prop, PropType, ExtractPropTypes, ExtractDefaultPropTypes } from 'vue';
 
 /** Vue 定义的类型，但是没有加 export，只能复制出来 */
 type EmitsToProps<T extends EmitsOptions> = T extends string[] ? {
@@ -77,17 +77,14 @@ export function injectStore<
   Mixin extends ComponentOptionsMixin = ComponentOptionsMixin,
   Extends extends ComponentOptionsMixin = ComponentOptionsMixin,
   E extends ObjectEmitsOptions = {},
-  EE extends string = string,
   S extends SlotsType = {},
   I extends ComponentInjectOptions = {},
-  II extends string = string,
 
   VueProps = FilterVueProps<PropOptions>,
   StoreProps = FilterStoreProperty<PropOptions>,
   Emits = E & StorePropertyToEmits<StoreProps>,
   Props = VueProps & StoreProps & EmitsToProps<Extract<Emits, ObjectEmitsOptions>>,
-  // Defaults = ExtractDefaultPropTypes<FilterVueProps<PropsOptions>>,
-  Defaults = {},
+  Defaults = ExtractDefaultPropTypes<Pick<PropOptions, keyof VueProps>>,
   This = CreateComponentPublicInstance<Props, RawBindings, D & StoreProps, C, M, Mixin, Extends, Required<Extract<Emits, ObjectEmitsOptions>>, Props, Defaults, false, I, S>,
 
   AnotherProps = ComponentOptionsBaseProps<VueT>,
@@ -95,11 +92,11 @@ export function injectStore<
   (
     // Props 使用 Props 无法获得 props 属性，但仅作用在 setup 的第一个参数，其实无所谓
     // E 使用 Emits 无法获得 ee-vuex 的事件，但仅作用在 setup 的第二个参数，其实无所谓
-    options: ComponentOptionsBase<AnotherProps, RawBindings, D, C, M, Mixin, Extends, Extract<E & StorePropertyToEmits<StoreProps>, ObjectEmitsOptions>, EE, Defaults, I, II, S> & {
+    options: ComponentOptionsBase<AnotherProps, RawBindings, D, C, M, Mixin, Extends, Extract<E & StorePropertyToEmits<StoreProps>, ObjectEmitsOptions>, string, Defaults, I, string, S> & {
       props: PropOptions | ComponentObjectPropsOptions<VueT> | Store<EEVuexT, EEVuexC, {}> | ThisType<This>
     } | ThisType<This>
   )//: Prettify<AnotherProps>
-  : DefineComponent<{}, RawBindings, D, C, M, Mixin, Extends, Required<Extract<Emits, ObjectEmitsOptions>>, EE, PublicProps, Props, {}, S>
+  : DefineComponent<{}, RawBindings, D, C, M, Mixin, Extends, Required<Extract<Emits, ObjectEmitsOptions>>, string, PublicProps, Props, Defaults, S>
 
 // type Prettify<T> = {
 //   [K in keyof T]: T[K];
