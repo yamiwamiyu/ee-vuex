@@ -32,7 +32,7 @@ export const eeVuex = {
 
 export function createStore(store, option) {
   if (option) {
-    if (option.constructor == String)
+    if (option.constructor === String)
       option = { name: option };
   } else
     option = {};
@@ -45,7 +45,7 @@ export function createStore(store, option) {
   function pushAsync(key, promise) {
     let arr = asyncs[key].promises;
     let withFinally = promise.finally(() => {
-      arr.splice(arr.findIndex(i => i == withFinally), 1);
+      arr.splice(arr.findIndex(i => i === withFinally), 1);
     });
     arr.push(withFinally);
   }
@@ -65,8 +65,8 @@ export function createStore(store, option) {
     let p;
 
     if (value != undefined) {
-      if (value.constructor == Function || value.constructor?.name == 'AsyncFunction') {
-        if (value.length == 1 || value.length == 2) {
+      if (value.constructor === Function || value.constructor?.name === 'AsyncFunction') {
+        if (value.length === 1 || value.length === 2) {
           // set方法
           set = value;
         } else {
@@ -82,10 +82,10 @@ export function createStore(store, option) {
             __default.push(value);
           }
         }
-      } else if (value == localStorage) {
+      } else if (value === localStorage) {
         // 直接key: localStorage代表要持久化这个状态，其它默认
         p = true;
-      } else if (value.constructor == Object) {
+      } else if (value.constructor === Object) {
         if (value.hasOwnProperty('p')
           || value.hasOwnProperty('get')
           || value.hasOwnProperty('set')
@@ -155,12 +155,12 @@ export function createStore(store, option) {
           setDefaultValue = true;
           const d = __default.shift();
           if (d) {
-            if (d.constructor == Function || d.constructor?.name == 'AsyncFunction' || d.constructor == Promise) {
+            if (d.constructor === Function || d.constructor?.name === 'AsyncFunction' || d.constructor === Promise) {
               // promise则等待异步结束
               let dret = d;
-              if (d.constructor == Function || d.constructor?.name == 'AsyncFunction')
+              if (d.constructor == Function || d.constructor?.name === 'AsyncFunction')
                 dret = d.call(_this, _this);
-              if (dret && dret.constructor == Promise) {
+              if (dret && dret.constructor === Promise) {
                 pushAsync(key, dret.then(i => {
                   // 有异步时，默认值将形成队列，set时防止清空后面的默认值
                   setDefaultValue = true;
@@ -189,7 +189,7 @@ export function createStore(store, option) {
           const temp = get.call(_this, ret);
           if (temp !== undefined) {
             // 异步get时(例如首次访问需要请求api获取数据)，暂时先返回原来的值
-            if (temp?.constructor == Promise)
+            if (temp?.constructor === Promise)
               pushAsync(key, temp.then(i => {
                 // 异步操作结束后，使用set赋值从而再次触发get使get能获得异步返回的最新值
                 // 使用时注意异步操作应该有条件判断，否则set后再次触发get可能导致死循环
@@ -216,7 +216,7 @@ export function createStore(store, option) {
           // 将__set传入，允许set内部提前赋值
           const temp = set.call(_this, value, __set);
           if (temp !== undefined) {
-            if (temp?.constructor == Promise) {
+            if (temp?.constructor === Promise) {
               // 异步set时(例如api确认后再赋值)
               // 注意：这里使用了Promise，只要Promise完成，computed一定会首先触发一次get，且获得的是旧值
               // 如果异步又成功set了值，那么随后还会触发一次get获得新值
@@ -315,7 +315,7 @@ export function injectStore(o) {
       } else {
         // vuex: 包含 get/set/p/init 任意一个字段或空对象
         // vue : 仅包含 type, required, validator, default 字段的对象
-        if (v.constructor == Object) {
+        if (v.constructor === Object) {
           const isProp = ((v.hasOwnProperty('type') || v.hasOwnProperty('required') || v.validator || v.hasOwnProperty('default')) 
             && !v.get && !v.set && !v.hasOwnProperty('p') && !v.hasOwnProperty('init'));
           if (isProp) {

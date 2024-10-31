@@ -18,21 +18,21 @@ type PropConstructor<T = any> = {
 
 type FilterStoreProperty<T> = {
   [K in keyof T as
-  // 包含 ee-vuex 对象字段
+  // ee-vuex: 包含 ee-vuex 对象字段
   T[K] extends { init: any } | { get: any } | { set: any } | { p: any } ? K :
-  // 包含 vue 任意字段或 null
+  // vue: 包含 vue 任意字段或 null
   T[K] extends null | { type: any } | { required: any } | { validator: any } | { default: any } ? never :
   // 值为类型构造函数，例如 Number，或 [Number, String]。但同时 () => string 也符合
   T[K] extends PropType<any> ?
   (
-    // 值为 PropType<*>
+    // vue: 值为 PropType<*>
     PropConstructor extends T[K] ? never :
-    // 值为构造函数写法
+    // vue: 值为构造函数写法
     T[K] extends PropConstructor | PropConstructor[] ? never :
     // 值为 get/set 的简便写法
     K
   ) :
-  // 任意类型的值
+  // ee-vuex: 任意类型的值
   K
   ]?
   : T[K] extends StorePropertyBase<infer R> ? R & {}
