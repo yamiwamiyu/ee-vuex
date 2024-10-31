@@ -391,6 +391,8 @@ The core method for obtaining asynchronous state is `store.getAsync`, which retu
 1. `async: boolean` Is it asynchronous
 2. `promise: Promise<T> | T` Asynchronous process, if there is no asynchrony, it will obtain the current value
 
+The component instance created by injectStore also has the `getAsync` function
+
 ## Definition Core
 
 In the store definition of ee vuex, a state is an object that contains the following 4 fields

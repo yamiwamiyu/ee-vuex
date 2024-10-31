@@ -384,6 +384,8 @@ const store = createStore({
 1. `async: boolean` 是否异步
 2. `promise: Promise<T> | T` 异步进程，若没有异步会获取到当前的值
 
+injectStore 创建的组件实例也有 `getAsync` 方法
+
 ## 定义核心
 
 在ee-vuex的仓库定义中，一个状态就是一个对象，这个对象包含下面4个字段

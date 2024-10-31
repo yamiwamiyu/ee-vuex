@@ -85,7 +85,7 @@ export function injectStore<
   Emits = E & StorePropertyToEmits<StoreProps>,
   Props = VueProps & StoreProps & EmitsToProps<Extract<Emits, ObjectEmitsOptions>>,
   Defaults = ExtractDefaultPropTypes<Pick<PropOptions, keyof VueProps>>,
-  This = CreateComponentPublicInstance<Props, RawBindings, D & StoreProps, C, M, Mixin, Extends, Required<Extract<Emits, ObjectEmitsOptions>>, Props, Defaults, false, I, S>,
+  This = CreateComponentPublicInstance<Props, RawBindings, D & StoreExt<StoreProps>, C, M, Mixin, Extends, Required<Extract<Emits, ObjectEmitsOptions>>, Props, Defaults, false, I, S>,
 
   AnotherProps = ComponentOptionsBaseProps<VueT>,
 >
@@ -96,7 +96,7 @@ export function injectStore<
       props: PropOptions | ComponentObjectPropsOptions<VueT> | Store<EEVuexT, EEVuexC, {}> | ThisType<This>
     } | ThisType<This>
   )//: Prettify<AnotherProps>
-  : DefineComponent<{}, RawBindings, D, C, M, Mixin, Extends, Required<Extract<Emits, ObjectEmitsOptions>>, string, PublicProps, Props, Defaults, S>
+  : DefineComponent<{}, RawBindings, D & StoreExt<StoreProps>, C, M, Mixin, Extends, Required<Extract<Emits, ObjectEmitsOptions>>, string, PublicProps, Props, Defaults, S>
 
 // type Prettify<T> = {
 //   [K in keyof T]: T[K];
