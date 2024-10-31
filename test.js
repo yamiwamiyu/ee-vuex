@@ -81,6 +81,14 @@ const store = createStore({
     nulGet: {
         get() { }
     },
+    asyncGetOnly: {
+        /** @param {string} value  */
+        async get(value) { return 5 }
+    },
+    asyncSetOnly: {
+        /** @param {string} value  */
+        async set(value) {  }
+    },
     hasGet: {
         init: '',
         get(value) {
@@ -109,6 +117,13 @@ const store = createStore({
         power(a) { return a * a; },
     },
     dvalue: () => [0],
+    /**
+     * @param {string} value 
+     */
+    async asyncGet(value, set) {
+        await new Promise(r => resolve(''))
+
+    }
 })
 
 const store3 = createStore({

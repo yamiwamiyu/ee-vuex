@@ -169,7 +169,7 @@ type Store<T, C, D> = {
 type StorePropertyBase<T> = StoreObject<T>
   // 0 个参数代表 get / 1 或 2 参函数代表 set
   // | ((...args: any[]) => Promise<T> | T)
-  | ((value: T, set: (value: any) => void, ...args: any[]) => Promise<T> | T | void)
+  | ((value: T, set: (value: any) => void, ...args: any[]) => Promise<T> | T | Promise<void> | void)
 
 // bug: get 或 set 中的 value 推断出了 T 类型，可是实际写调用 value 却又被识别为 any
 // ThisType<T> 导致的，使用 ThisType 使用 | 而不是使用 &
@@ -184,9 +184,9 @@ type StoreObject<T = any> = {
 
 type Computed<T> = {
   /** 获取属性值 */
-  get?(value: T): Promise<T> | T | void,
+  get?(value: T): Promise<T> | T | Promise<void> | void,
   /** 设置属性值 */
-  set?(value: T, set: (value: T) => void): Promise<T> | T | void;
+  set?(value: T, set: (value: T) => void): Promise<T> | T | Promise<void> | void;
 }
 
 type StoreComputed<SO, T> = unknown extends SO ? Computed<T> : Computed<SO>;
