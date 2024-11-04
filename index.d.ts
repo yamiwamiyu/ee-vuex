@@ -1,4 +1,4 @@
-import { EmitsOptions, ComponentOptionsMixin, ComputedOptions, MethodOptions, SlotsType, ComponentInjectOptions, ObjectEmitsOptions, ComponentObjectPropsOptions, CreateComponentPublicInstance, ComponentOptionsBase, DefineComponent, PublicProps, Prop, PropType, ExtractPropTypes, ExtractDefaultPropTypes } from 'vue';
+import { EmitsOptions, ComponentOptionsMixin, ComputedOptions, MethodOptions, SlotsType, ComponentInjectOptions, ObjectEmitsOptions, ComponentObjectPropsOptions, CreateComponentPublicInstance, ComponentOptionsBase, Prop, PropType, ExtractPropTypes, PublicProps, DefineComponent } from 'vue';
 
 /** Vue 定义的类型，但是没有加 export，只能复制出来 */
 type EmitsToProps<T extends EmitsOptions> = T extends string[] ? {
@@ -84,19 +84,19 @@ export function injectStore<
   StoreProps = FilterStoreProperty<PropOptions>,
   Emits = E & StorePropertyToEmits<StoreProps>,
   Props = VueProps & StoreProps & EmitsToProps<Extract<Emits, ObjectEmitsOptions>>,
-  Defaults = ExtractDefaultPropTypes<Pick<PropOptions, keyof VueProps>>,
-  This = CreateComponentPublicInstance<Props, RawBindings, D & StoreExt<StoreProps>, C, M, Mixin, Extends, Required<Extract<Emits, ObjectEmitsOptions>>, Props, Defaults, false, I, S>,
+  This = CreateComponentPublicInstance<Props, RawBindings, D & StoreExt<StoreProps>, C, M, Mixin, Extends, Required<Extract<Emits, ObjectEmitsOptions>>, Props, {}, false, I, S>,
 
   AnotherProps = ComponentOptionsBaseProps<VueT>,
 >
   (
     // Props 使用 Props 无法获得 props 属性，但仅作用在 setup 的第一个参数，其实无所谓
     // E 使用 Emits 无法获得 ee-vuex 的事件，但仅作用在 setup 的第二个参数，其实无所谓
-    options: ComponentOptionsBase<AnotherProps, RawBindings, D, C, M, Mixin, Extends, Extract<E & StorePropertyToEmits<StoreProps>, ObjectEmitsOptions>, string, Defaults, I, string, S> & {
+    options: ComponentOptionsBase<AnotherProps, RawBindings, D, C, M, Mixin, Extends, Extract<E & StorePropertyToEmits<StoreProps>, ObjectEmitsOptions>, string, {}, I, string, S> & {
       props: PropOptions | ComponentObjectPropsOptions<VueT> | Store<EEVuexT, EEVuexC, {}> | ThisType<This>
     } | ThisType<This>
   )//: Prettify<AnotherProps>
-  : DefineComponent<{}, RawBindings, D & StoreExt<StoreProps>, C, M, Mixin, Extends, Required<Extract<Emits, ObjectEmitsOptions>>, string, PublicProps, Props, Defaults, S>
+  // : DefineComponent<{}, RawBindings, D & StoreExt<StoreProps>, C, M, Mixin, Extends, Required<Extract<Emits, ObjectEmitsOptions>>, string, PublicProps, Props, {}, S>
+  : { new(...args: any): This } & ComponentOptionsBase<Props & PublicProps, RawBindings, D & StoreExt<StoreProps>, C, M, Mixin, Extends, {}, string, {}, I, string, S> & PublicProps
 
 // type Prettify<T> = {
 //   [K in keyof T]: T[K];
@@ -127,8 +127,11 @@ type AsyncState<T> = Readonly<{
 }>
 
 /** 仓库的额外函数 */
-type StoreExt<T> = T & {
-  /** 获取属性的 default, get, set 产生的未执行完的异步状态，旨在用于状态未加载完成前显示加载动画
+type StoreExt<T> = T & IAsyncState<T>
+
+/** 获取仓库的异步状态 */
+interface IAsyncState<T> {
+  /** 获取属性的 default, get, set 产生的未执行完的异步状态，可用于状态未加载完成前显示加载动画
    * @param key - 仓库的字段名
    * @example 
    * // 模板显示异步数据，数据返回前显示加载状态，下面是伪代码示例
@@ -254,3 +257,9 @@ export function createStore<T, C, D, RT = {
    */
   set?: (key: keyof T, value: any, store: R) => void;
 } | string): R;
+
+export {
+  FilterStoreProperty,
+  FilterVueProps,
+  IAsyncState,
+}
