@@ -1,4 +1,4 @@
-import { EmitsOptions, ComponentOptionsMixin, ComputedOptions, MethodOptions, SlotsType, ComponentInjectOptions, ObjectEmitsOptions, ComponentObjectPropsOptions, CreateComponentPublicInstance, ComponentOptionsBase, Prop, PropType, ExtractPropTypes, PublicProps, DefineComponent } from 'vue';
+import { EmitsOptions, ComponentOptionsMixin, ComputedOptions, MethodOptions, SlotsType, ComponentInjectOptions, ObjectEmitsOptions, ComponentObjectPropsOptions, CreateComponentPublicInstance, ComponentOptionsBase, Prop, PropType, ExtractPropTypes, PublicProps, DefineComponent, ExtractDefaultPropTypes } from 'vue';
 
 /** Vue 定义的类型，但是没有加 export，只能复制出来 */
 type EmitsToProps<T extends EmitsOptions> = T extends string[] ? {
@@ -84,6 +84,7 @@ export function injectStore<
   StoreProps = FilterStoreProperty<PropOptions>,
   Emits = E & StorePropertyToEmits<StoreProps>,
   Props = VueProps & StoreProps & EmitsToProps<Extract<Emits, ObjectEmitsOptions>>,
+  Defaults = ExtractDefaultPropTypes<Pick<PropOptions, keyof VueProps & keyof PropOptions>>,
   This = CreateComponentPublicInstance<Props, RawBindings, D & StoreExt<StoreProps>, C, M, Mixin, Extends, Required<Extract<Emits, ObjectEmitsOptions>>, Props, {}, false, I, S>,
 
   AnotherProps = ComponentOptionsBaseProps<VueT>,
@@ -95,8 +96,8 @@ export function injectStore<
       props: PropOptions | ComponentObjectPropsOptions<VueT> | Store<EEVuexT, EEVuexC, {}> | ThisType<This>
     } | ThisType<This>
   )//: Prettify<AnotherProps>
-  // : DefineComponent<{}, RawBindings, D & StoreExt<StoreProps>, C, M, Mixin, Extends, Required<Extract<Emits, ObjectEmitsOptions>>, string, PublicProps, Props, {}, S>
-  : { new(...args: any): This } & ComponentOptionsBase<Props & PublicProps, RawBindings, D & StoreExt<StoreProps>, C, M, Mixin, Extends, {}, string, {}, I, string, S> & PublicProps
+  : DefineComponent<{}, RawBindings, D & StoreExt<StoreProps>, C, M, Mixin, Extends, Required<Extract<Emits, ObjectEmitsOptions>>, string, PublicProps, Partial<Pick<Props, keyof Defaults & keyof Props>> & Omit<Props, keyof Defaults & keyof Props>, {}, S>
+  // : { new(...args: any): This } & ComponentOptionsBase<Props & PublicProps, RawBindings, D & StoreExt<StoreProps>, C, M, Mixin, Extends, {}, string, {}, I, string, S> & PublicProps
 
 // type Prettify<T> = {
 //   [K in keyof T]: T[K];

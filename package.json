@@ -1,6 +1,6 @@
 {
   "name": "ee-vuex",
-  "version": "2.1.3",
+  "version": "2.1.4",
   "description": "More convenient global status manager than Vuex and Pinia",
   "repository": {
     "type": "git",
