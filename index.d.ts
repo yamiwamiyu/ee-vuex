@@ -86,13 +86,11 @@ export function injectStore<
   Props = VueProps & StoreProps & EmitsToProps<Extract<Emits, ObjectEmitsOptions>>,
   Defaults = ExtractDefaultPropTypes<Pick<PropOptions, keyof VueProps & keyof PropOptions>>,
   This = CreateComponentPublicInstance<Props, RawBindings, D & StoreExt<StoreProps>, C, M, Mixin, Extends, Required<Extract<Emits, ObjectEmitsOptions>>, Props, {}, false, I, S>,
-
-  AnotherProps = ComponentOptionsBaseProps<VueT>,
 >
   (
     // Props 使用 Props 无法获得 props 属性，但仅作用在 setup 的第一个参数，其实无所谓
     // E 使用 Emits 无法获得 ee-vuex 的事件，但仅作用在 setup 的第二个参数，其实无所谓
-    options: ComponentOptionsBase<AnotherProps, RawBindings, D, C, M, Mixin, Extends, Extract<E & StorePropertyToEmits<StoreProps>, ObjectEmitsOptions>, string, {}, I, string, S> & {
+    options: ComponentOptionsBase<VueProps & StoreProps, RawBindings, D, C, M, Mixin, Extends, Extract<E & StorePropertyToEmits<StoreProps>, ObjectEmitsOptions>, string, {}, I, string, S> & {
       props: PropOptions | ComponentObjectPropsOptions<VueT> | Store<EEVuexT, EEVuexC, {}> | ThisType<This>
     } | ThisType<This>
   )//: Prettify<AnotherProps>
@@ -187,8 +185,37 @@ type StoreObject<T = any> = {
 }
 
 type Computed<T> = {
-  /** 获取属性值 */
-  get?(value: T): Promise<T> | T | Promise<void> | void,
+  /** 获取属性值
+   * 
+   * 注意：使用异步函数获取值时，按照流程会有以下问题
+   * - 异步函数最终的 then 会将返回值调用 set 赋值给属性
+   * - 赋值后属性值因为发生变化，从而再次触发 get 以获取最新值
+   * - 若 get 中的异步没有对值进行条件判断而再次异步获取值，将造成死循环
+   * 
+   * 例如 async get() { return await 异步搜索函数(搜索关键字) }
+   * 
+   * 本意是希望异步搜索函数变化或搜索关键字变化时，能去搜索返回最新的内容，可是却会造成了死循环
+   * 
+   * 在 v2.2.0 版本时修复了这个问题，修复后流程如下
+   * - 异步函数最终的 then 会将返回值调用 set 赋值给属性(不变)
+   * - 赋值后属性值因为发生变化，从而再次触发 get 以获取最新值(不变)
+   * - 再次调用异步 get，此次调用是为了搜集响应式数据以在依赖变量变化时响应值变化
+   * - 直接返回上一次的异步结果，忽略本次的异步结果
+   * - 下次依赖的响应式数据发生变化时，会自动再次触发 get 函数以获取最新值
+   * @param value - 当前属性的值
+   * @param postback - 是否为异步 get 完成后引起的再次进入 get，可用于在搜集完所有响应式数据后 return value 来跳过异步处理
+   * @example
+   * get(value, postback) {
+   *   const reactive1 = this.a;
+   *   const reactive2 = this.b;
+   *   // 上面定义变量来搜集响应式依赖
+   *   if (postback) return value;
+   *   return new Promise(resolve => {
+   *     // 异步操作
+   *   })
+   * }
+   */
+  get?(value: T, postback: boolean): Promise<T> | T | Promise<void> | void,
   /** 设置属性值 */
   set?(value: T, set: (value: T) => void): Promise<T> | T | Promise<void> | void;
 }

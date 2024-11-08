@@ -52,7 +52,7 @@ export function createStore(store, option) {
   // 仓库对象
   const x = reactive({});
   x.getAsync = function(key) {
-    return asyncs[key].async;
+    return asyncs[key]?.async;
   }
   // this 指针对象
   const _this = option.this ?? x;
@@ -130,6 +130,8 @@ export function createStore(store, option) {
 
     // get设置默认值时，set不清空默认值
     let setDefaultValue = false;
+    // 异步 get 获取值时，防止死循环
+    let asyncGetValue = false;
     // 默认值为undefined
     const v = ref();
     // 因为set允许异步，所以同步和异步最后都是调用这个set来赋值
@@ -158,7 +160,7 @@ export function createStore(store, option) {
             if (d.constructor === Function || d.constructor?.name === 'AsyncFunction' || d.constructor === Promise) {
               // promise则等待异步结束
               let dret = d;
-              if (d.constructor == Function || d.constructor?.name === 'AsyncFunction')
+              if (d.constructor !== Promise)
                 dret = d.call(_this, _this);
               if (dret && dret.constructor === Promise) {
                 pushAsync(key, dret.then(i => {
@@ -186,22 +188,30 @@ export function createStore(store, option) {
         let ret = v.value;
         // 允许get的返回值覆盖原本应该设置的值
         if (get) {
-          const temp = get.call(_this, ret);
-          if (temp !== undefined) {
+          const temp = get.call(_this, ret, asyncGetValue);
+          // get 异步设置的值，本次忽略 get 直接返回
+          // 但仍要执行 get.call，主要是搜集其中的响应式变量，否则将失去响应式
+          if (!asyncGetValue && temp !== undefined) {
             // 异步get时(例如首次访问需要请求api获取数据)，暂时先返回原来的值
             if (temp?.constructor === Promise)
               pushAsync(key, temp.then(i => {
-                // 异步操作结束后，使用set赋值从而再次触发get使get能获得异步返回的最新值
-                // 使用时注意异步操作应该有条件判断，否则set后再次触发get可能导致死循环
+                // todo: 异步操作结束后，使用set赋值从而再次触发get以获取最新值，这可能导致死循环
                 if (i !== undefined) {
                   x[key] = i;
+                  console.log('get', key, '返回', i, '设置异步值')
+                  asyncGetValue = true;
                   return i;
+                } else {
+                  console.log('get', key, '返回 undefined 不设置异步值')
                 }
               }));
             else
               ret = temp;
           }
         }
+        if (asyncGetValue)
+          console.log('异步 get 后直接返回值', ret)
+        asyncGetValue = false;
         return ret;
       },
       set: function (value) {
@@ -385,20 +395,30 @@ export function injectStore(o) {
    */
   // 如果组件没有 data 这里也默认创建一个 data
   // 否则 Object.isExtensible(this.$data) 为 false 不能使用 Object.defineProperty
-  mixin.data = function () { return { __propsEmit: {} }; }
+  mixin.data = function () { return { __ee_vuex_props_emit: {} }; }
   mixin.beforeMount = function () {
     const content = createStore(props,
       {
         this: this,
         set(key, value) {
-          // emit 之后有可能外部数据变化后又触发 watch["$props." + key]
+          // todo 验证: emit 之后有可能外部数据变化后又触发 watch["$props." + key]
           // 然后又 emit 一次值，导致外部传入的 props 值修改两次
           // 虽然影响不大，但感觉也算是 bug
-          this.__propsEmit[key] = true;
+          this.__ee_vuex_props_emit[key] = true;
           this.$emit("update:" + key, value);
         }
       });
     for (const key in content) {
+      // 多个 getAsync 合并
+      if (key === 'getAsync') {
+        if (this.$data.hasOwnProperty(key)) {
+          this.$data.__ee_vuex_asyncs.push(content[key]);
+        } else {
+          this.$data.__ee_vuex_asyncs = [content[key]];
+          this.$data[key] = (key) => this.$data.__ee_vuex_asyncs.find(i => i(key))
+        }
+        continue;
+      }
       Object.defineProperty(this.$data, key, {
         get: () => content[key],
         set: v => content[key] = v
@@ -418,8 +438,8 @@ export function injectStore(o) {
       // 所以这里强制回传值让外部值变回 1
       // 但是如果原本就是 set 触发的 emit 导致外部值变化这里就会重复 emit 了
       // 所以做出如下判断
-      if (this.__propsEmit[key]) {
-        delete this.__propsEmit[key];
+      if (this.__ee_vuex_props_emit[key]) {
+        delete this.__ee_vuex_props_emit[key];
         return;
       }
       this.$emit("update:" + key, this[key]);

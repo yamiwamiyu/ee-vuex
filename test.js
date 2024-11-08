@@ -10,9 +10,6 @@ async function testAsyncFunc() {
 }
 
 const comp = injectStore({
-    data() {
-        return {}
-    },
     /**
      * @type {import('vue').SlotsType<{
      *  default: { value: string }
@@ -62,19 +59,25 @@ const comp = injectStore({
             set(value) { }
         },
         vuexNilObj: {},
+        /** 直接赋值 */
+        vuexKeyword: '',
+    },
+    data() {
+        // this.$props.
+        return {}
     },
     mounted() {
         // this.$props.
         // this.$emit('', )
     },
     setup(props, ctx) {
+        // props.
         ctx.emit('')
     }
 });
 
 /** @type {InstanceType<typeof comp>['$props']} */
 const a = {
-
 }
 
 const store = createStore({
