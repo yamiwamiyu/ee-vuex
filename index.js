@@ -51,7 +51,7 @@ export function createStore(store, option) {
   }
   // 仓库对象
   const x = reactive({});
-  x.getAsync = function(key) {
+  x.getAsync = function (key) {
     return asyncs[key]?.async;
   }
   // this 指针对象
@@ -64,14 +64,14 @@ export function createStore(store, option) {
     // 是否持久化
     let p;
 
-    if (value != undefined) {
+    if (value != null) {
       if (value.constructor === Function || value.constructor?.name === 'AsyncFunction') {
         if (value.length === 1 || value.length === 2) {
           // set方法
           set = value;
         } else {
           // key: () => {} 缺少value.prototype ，视为设置默认值
-          // todo: 仅有箭头函数视为默认值，但是 this 默认会被编译成 undefined 导致无法使用 this
+          // 仅有箭头函数视为默认值，但是 this 默认会被编译成 undefined 导致无法使用 this，此时应该使用对象定义中的 default 并不使用箭头函数
           // [async] key() {} 缺少value.prototype ，视为get
           // key: function [name]() {} 有value.prototype ，视为get
           if (value.prototype || value.toString().startsWith(key) || value.toString().startsWith('async ' + key)) {
@@ -195,27 +195,30 @@ export function createStore(store, option) {
             // 异步get时(例如首次访问需要请求api获取数据)，暂时先返回原来的值
             if (temp?.constructor === Promise)
               pushAsync(key, temp.then(i => {
-                // todo: 异步操作结束后，使用set赋值从而再次触发get以获取最新值，这可能导致死循环
+                // ? 异步操作结束后，使用set赋值从而再次触发get以获取最新值，这可能导致死循环
+                // ✔ 增加 asyncGetValue 来解除死循环危险
                 if (i !== undefined) {
                   x[key] = i;
-                  console.log('get', key, '返回', i, '设置异步值')
+                  // console.log('get', key, '返回', i, '设置异步值')
                   asyncGetValue = true;
                   return i;
-                } else {
-                  console.log('get', key, '返回 undefined 不设置异步值')
                 }
+                // else {
+                //   console.log('get', key, '返回 undefined 不设置异步值')
+                // }
               }));
             else
               ret = temp;
           }
         }
-        if (asyncGetValue)
-          console.log('异步 get 后直接返回值', ret)
+        // if (asyncGetValue)
+        //   console.log('异步 get 后直接返回值', ret)
         asyncGetValue = false;
         return ret;
       },
       set: function (value) {
         // 相同的值不重新赋值
+        // reactive.set 时会调用一次 get，因为需要获取 oldValue。如果 get 返回的是 computed 对象，则不会触发到 get。createStore 已经没问题，确保 injectStore 也正确返回 computed 即可
         if (isEquals(v.value, value))
           return;
         // 外部调用set比调用get还要先的话，忽略掉get的默认值
@@ -228,15 +231,16 @@ export function createStore(store, option) {
           if (temp !== undefined) {
             if (temp?.constructor === Promise) {
               // 异步set时(例如api确认后再赋值)
-              // 注意：这里使用了Promise，只要Promise完成，computed一定会首先触发一次get，且获得的是旧值
-              // 如果异步又成功set了值，那么随后还会触发一次get获得新值
-              // todo: 考虑修复上面这个回调 2 次的问题
               pushAsync(key, temp.then(i => {
                 // 操作成功时才赋值，如果操作成功返回空，则赋值原来set的值
                 if (i !== undefined) {
+                  // console.log('异步 set', key, i)
                   __set(i);
                   return i;
                 }
+                // else {
+                //   console.log('异步 set 返回 undefined 不设置异步值', key)
+                // }
               }).catch(() => { }));
               // 暂时不赋值
               return;
@@ -300,12 +304,13 @@ export function createStore(store, option) {
       eeVuex[option.name] = x;
     }
   }
+
   return x;
 }
 
 export function injectStore(o) {
   // 没有定义props的或者props是数组字符串的形式
-  if (!o.props || o.props.length != undefined)
+  if (!o.props || o.props.length !== undefined)
     return o;
 
   // ee-vuex的简易写法(例如async)很多不符合vue组件定义props的语法
@@ -314,10 +319,10 @@ export function injectStore(o) {
   const oprops = {};  // vue的props
   for (const key in props) {
     const v = props[key];
-    if (v != undefined) {
+    if (v != null) {
       const isType = v instanceof Array ?
-        v.every(i => types.indexOf(i) != -1) :
-        types.indexOf(v) != -1;
+        v.every(i => types.indexOf(i) !== -1) :
+        types.indexOf(v) !== -1;
       // 非对象：prop: Number 或者 prop: [Number, String]
       if (isType) {
         oprops[key] = v;
@@ -326,7 +331,7 @@ export function injectStore(o) {
         // vuex: 包含 get/set/p/init 任意一个字段或空对象
         // vue : 仅包含 type, required, validator, default 字段的对象
         if (v.constructor === Object) {
-          const isProp = ((v.hasOwnProperty('type') || v.hasOwnProperty('required') || v.validator || v.hasOwnProperty('default')) 
+          const isProp = ((v.hasOwnProperty('type') || v.hasOwnProperty('required') || v.validator || v.hasOwnProperty('default'))
             && !v.get && !v.set && !v.hasOwnProperty('p') && !v.hasOwnProperty('init'));
           if (isProp) {
             oprops[key] = v;
@@ -408,21 +413,24 @@ export function injectStore(o) {
           this.$emit("update:" + key, value);
         }
       });
-    for (const key in content) {
+    const raw = toRaw(content);
+    for (const key in raw) {
+      const value = raw[key];
       // 多个 getAsync 合并
       if (key === 'getAsync') {
         if (this.$data.hasOwnProperty(key)) {
-          this.$data.__ee_vuex_asyncs.push(content[key]);
+          this.$data.__ee_vuex_asyncs.push(value);
         } else {
-          this.$data.__ee_vuex_asyncs = [content[key]];
+          this.$data.__ee_vuex_asyncs = [value];
           this.$data[key] = (key) => this.$data.__ee_vuex_asyncs.find(i => i(key))
         }
         continue;
       }
-      Object.defineProperty(this.$data, key, {
-        get: () => content[key],
-        set: v => content[key] = v
-      });
+      // Object.defineProperty(this.$data, key, {
+      //   get: () => content[key],
+      //   set: v => content[key] = v
+      // });
+      this.$data[key] = raw[key];
     }
   }
   mixin.emits = [];
