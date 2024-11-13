@@ -148,7 +148,7 @@ export function createStore(store, option) {
       }
       v.value = value;
       if (option.set)
-        option.set.call(_this, key, v.value, x);
+        option.set.call(_this, key, value, x);
     }
     x[key] = computed({
       get: function () {
@@ -374,23 +374,9 @@ export function injectStore(o) {
   bug: 如果mixins或extends包含组件自身有多个data
   data的function会走mergeFn的逻辑以合并所有data
   合并data时会取消掉computed引用而变成普通的值
-  且没有办法只获得computed引用而步触发get值
-  则只能自己创建属性(也就是方法，只有在调用时才触发)来封装一次computed
-  // vue中 computed 原本也会执行这样的操作
-  const c = computed({
-      get,
-      set
-  });
-  Object.defineProperty(ctx, key, {
-      enumerable: true,
-      configurable: true,
-      get: () => c.value,
-      set: v => (c.value = v)
-  });
-  在赋值时，setup > data > props > ctx
-  所以 Object.defineProperty 定义到 ctx 上会被 props 的赋值给拦截
-  还是得赋值到 setup 或 data 上
-  这里赋值到 data 上来解决
+  所以通过 beforeMount 手动将 computed 赋值进 $data 中
+
+  在赋值时优先级如下，setup > data > props > ctx
 
   bug: 有 watch 时，观察了一个 computed 变量，get 读取了 ee-vuex 的 props 时
   希望 get 读取的变量不是 props 而是 $data 中的属性
@@ -400,16 +386,13 @@ export function injectStore(o) {
    */
   // 如果组件没有 data 这里也默认创建一个 data
   // 否则 Object.isExtensible(this.$data) 为 false 不能使用 Object.defineProperty
-  mixin.data = function () { return { __ee_vuex_props_emit: {} }; }
+  mixin.data = function () { return { }; }
   mixin.beforeMount = function () {
     const content = createStore(props,
       {
         this: this,
         set(key, value) {
-          // todo 验证: emit 之后有可能外部数据变化后又触发 watch["$props." + key]
-          // 然后又 emit 一次值，导致外部传入的 props 值修改两次
-          // 虽然影响不大，但感觉也算是 bug
-          this.__ee_vuex_props_emit[key] = true;
+          // props 全部作为双向数据流使用
           this.$emit("update:" + key, value);
         }
       });
@@ -426,10 +409,7 @@ export function injectStore(o) {
         }
         continue;
       }
-      // Object.defineProperty(this.$data, key, {
-      //   get: () => content[key],
-      //   set: v => content[key] = v
-      // });
+      // 解决 reactive.set 会先 get 的问题，直接返回 computed 就不会触发 get
       this.$data[key] = raw[key];
     }
   }
@@ -438,19 +418,9 @@ export function injectStore(o) {
   for (const key in props) {
     // 注入watch侦听props在子组件被改变以同步给仓库的值
     mixin.watch["$props." + key] = function (value) {
+      // 内外 set 有限定值范围的情况下可能会造成不同步的现象
+      // 这算是数据流的 bug 但是很少有情况这么使用数据，所以忽略掉这个实现
       this[key] = value;
-      // 例如值只能是0-1，当前值为1，外部修改props为1.2
-      // 内部限定成了1，1和原本的值不变，不重新赋值
-      // 不赋值导致 option.set 不执行且不会 emit 被限定的 1 回去
-      // 进而导致外部值(1.2)和内部值(1)不一致
-      // 所以这里强制回传值让外部值变回 1
-      // 但是如果原本就是 set 触发的 emit 导致外部值变化这里就会重复 emit 了
-      // 所以做出如下判断
-      if (this.__ee_vuex_props_emit[key]) {
-        delete this.__ee_vuex_props_emit[key];
-        return;
-      }
-      this.$emit("update:" + key, this[key]);
     }
     // 注入emits
     mixin.emits.push("update:" + key);
