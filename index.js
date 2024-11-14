@@ -397,20 +397,22 @@ export function injectStore(o) {
         }
       });
     const raw = toRaw(content);
+    const data = this.$data;
     for (const key in raw) {
       const value = raw[key];
       // 多个 getAsync 合并
       if (key === 'getAsync') {
-        if (this.$data.hasOwnProperty(key)) {
-          this.$data.__ee_vuex_asyncs.push(value);
+        // data 返回的 createStore 实例
+        if (data.hasOwnProperty(key) && data.__ee_vuex_asyncs) {
+          data.__ee_vuex_asyncs.push(value);
         } else {
-          this.$data.__ee_vuex_asyncs = [value];
-          this.$data[key] = (key) => this.$data.__ee_vuex_asyncs.find(i => i(key))
+          data.__ee_vuex_asyncs = [value];
+          data[key] = (key) => this.$data.__ee_vuex_asyncs.find(i => i(key))
         }
         continue;
       }
       // 解决 reactive.set 会先 get 的问题，直接返回 computed 就不会触发 get
-      this.$data[key] = raw[key];
+      data[key] = raw[key];
     }
   }
   mixin.emits = [];
