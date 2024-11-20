@@ -402,12 +402,21 @@ export function injectStore(o) {
       const value = raw[key];
       // 多个 getAsync 合并
       if (key === 'getAsync') {
-        // data 返回的 createStore 实例
-        if (data.hasOwnProperty(key) && data.__ee_vuex_asyncs) {
+        // data 返回的 createStore 实例就会有 getAsync，但是 __ee_vuex_asyncs 还是空的
+        const has = data.hasOwnProperty(key);
+        if (has && data.__ee_vuex_asyncs) {
           data.__ee_vuex_asyncs.push(value);
         } else {
           data.__ee_vuex_asyncs = [value];
-          data[key] = (key) => this.$data.__ee_vuex_asyncs.find(i => i(key))
+          if (has)
+            data.__ee_vuex_asyncs.push(data[key]);
+          data[key] = (key) => {
+            for (const getAsync of this.$data.__ee_vuex_asyncs) {
+              const ret = getAsync(key);
+              if (ret)
+                return ret;
+            }
+          }
         }
         continue;
       }
