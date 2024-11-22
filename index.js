@@ -237,10 +237,10 @@ export function createStore(store, option) {
                   // console.log('异步 set', key, i)
                   __set(i);
                   return i;
+                } else {
+                  __set(value);
+                  return value;
                 }
-                // else {
-                //   console.log('异步 set 返回 undefined 不设置异步值', key)
-                // }
               }).catch(() => { }));
               // 暂时不赋值
               return;
