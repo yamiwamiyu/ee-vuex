@@ -40,12 +40,22 @@ export function createStore(store, option) {
   // 持久化数据
   const pdatas = [];
   // 每个属性的异步状态
-  /** @type {Record<string, { promises: Promise[], async: { promise: Promise, async: boolean } }>} */
+  /** @type {Record<string, { promises: Promise[], async: { promise: Promise, async: boolean, status: ('pending' | 'fulfilled' | 'rejected') | undefined } }>} */
   const asyncs = reactive({});
   function pushAsync(key, promise) {
-    let arr = asyncs[key].promises;
+    const a = asyncs[key];
+    a.async.status = 'pending';
+    let arr = a.promises;
     let withFinally = promise.finally(() => {
       arr.splice(arr.findIndex(i => i === withFinally), 1);
+    }).then(ret => {
+      if (!arr.length)
+        a.async.status = 'fulfilled'
+      return ret;
+    }).catch(ret => {
+      if (!arr.length)
+        a.async.status = 'rejected'
+      throw ret;
     });
     arr.push(withFinally);
   }
@@ -241,7 +251,7 @@ export function createStore(store, option) {
                   __set(value);
                   return value;
                 }
-              }).catch(() => { }));
+              }));
               // 暂时不赋值
               return;
             }
@@ -260,12 +270,19 @@ export function createStore(store, option) {
           // 首次触发 get
           if (__default.length)
             x[key];
-          if (!asyncs[key].promises.length)
+          const a = asyncs[key];
+          if (!a.promises.length)
             return x[key];
           return new Promise(async resolve => {
             let result;
-            while (asyncs[key].promises.length)
-              result = await Promise.race(asyncs[key].promises);
+            while (a.promises.length) {
+              try {
+                result = await Promise.race(a.promises);
+              } catch (err) {
+                if (!a.promises.length)
+                  throw err;
+              }
+            }
             resolve(result);
           });
         }),
@@ -274,7 +291,7 @@ export function createStore(store, option) {
           if (__default.length)
             x[key];
           return !!asyncs[key].promises.length;
-        })
+        }),
       }
     }
 
@@ -386,7 +403,7 @@ export function injectStore(o) {
    */
   // 如果组件没有 data 这里也默认创建一个 data
   // 否则 Object.isExtensible(this.$data) 为 false 不能使用 Object.defineProperty
-  mixin.data = function () { return { }; }
+  mixin.data = function () { return {}; }
   mixin.beforeMount = function () {
     const content = createStore(props,
       {

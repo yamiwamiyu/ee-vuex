@@ -123,6 +123,13 @@ type AsyncState<T> = Readonly<{
    * </template>
    */
   async: boolean;
+  /** 当前或最后一次异步的结果
+   * - undefined: 没有异步
+   * - pending: 正在异步
+   * - fulfilled: 成功
+   * - rejected: 失败
+   */
+  status: ('pending' | 'fulfilled' | 'rejected') | undefined;
 }>
 
 /** 仓库的额外函数 */
