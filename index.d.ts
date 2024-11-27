@@ -286,6 +286,10 @@ export function createStore<T, C, D, RT = {
   /** 仓库定义的 get/set/默认值 方法调用时的this实例，默认为仓库实例 */
   this?: This;
   /** 仓库中所有属性赋值后的回调方法，可用于记录日志等调试业务
+   * 
+   * 回调有以下几种情况
+   * - 原本值为 true，再次赋值为 true 则不回调
+   * - 原本值为 true，赋值为 false，属性有 set 函数且返回了值，无论返回 true 还是 false，都会回调
    * @param key - 赋值的属性
    * @param value - 赋值的值，不是 get 的值
    * @param store - 赋值的仓库实例

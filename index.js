@@ -147,8 +147,11 @@ export function createStore(store, option) {
     // 因为set允许异步，所以同步和异步最后都是调用这个set来赋值
     const __set = (value) => {
       // 相同的值不重新赋值
-      if (isEquals(v.value, value))
+      if (isEquals(v.value, value)) {
+        if (option.set)
+          option.set.call(_this, key, value, x);
         return;
+      }
       // 持久化
       if (p) {
         if (value != null)
