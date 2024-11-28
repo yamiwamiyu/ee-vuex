@@ -275,7 +275,7 @@ export function createStore(store, option) {
             x[key];
           const a = asyncs[key];
           if (!a.promises.length)
-            return x[key];
+            return Promise.resolve(x[key]);
           return new Promise(async resolve => {
             let result;
             while (a.promises.length) {

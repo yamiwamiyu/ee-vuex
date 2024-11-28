@@ -108,11 +108,11 @@ export function injectStore<
 
 /** 仓库中的异步状态 */
 type AsyncState<T> = Readonly<{
-  /** 当前的异步进程，若没有异步会返回当前值
+  /** 当前的 Promise，若没有异步会返回当前值
    * 
-   * 若 default, get, set 同时执行产生多个 Promise，完成时将返回最后的状态
+   * 若 default, get, set 同时执行产生多个 Promise，将返回最后完成的 Promise 的结果
    */
-  promise: Promise<T> | T;
+  promise: Promise<T>;
   /** 当前是否存在异步
    * @example 
    * <template>
@@ -123,7 +123,7 @@ type AsyncState<T> = Readonly<{
    * </template>
    */
   async: boolean;
-  /** 当前或最后一次异步的结果
+  /** 当前或最后一次异步的状态
    * - undefined: 没有异步
    * - pending: 正在异步
    * - fulfilled: 成功
