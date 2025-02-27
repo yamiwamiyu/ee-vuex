@@ -1,4 +1,4 @@
-import { EmitsOptions, ComponentOptionsMixin, ComputedOptions, MethodOptions, SlotsType, ComponentInjectOptions, ObjectEmitsOptions, ComponentObjectPropsOptions, CreateComponentPublicInstance, ComponentOptionsBase, Prop, PropType, ExtractPropTypes, PublicProps, DefineComponent, ExtractDefaultPropTypes } from 'vue';
+import { defineComponent, EmitsOptions, ComponentOptionsMixin, ComputedOptions, MethodOptions, SlotsType, ComponentInjectOptions, ObjectEmitsOptions, ComponentObjectPropsOptions, CreateComponentPublicInstance, ComponentOptionsBase, Prop, PropType, ExtractPropTypes, PublicProps, DefineComponent, ExtractDefaultPropTypes } from 'vue';
 
 /** Vue 定义的类型，但是没有加 export，只能复制出来 */
 type EmitsToProps<T extends EmitsOptions> = T extends string[] ? {
@@ -46,23 +46,10 @@ type FilterVueProps<T> = { [K in keyof ExtractPropTypes<{
   [K in keyof T as K extends keyof FilterStoreProperty<T> ? never : K]: T[K];
 }>]: T[K & keyof T] extends Prop<infer P> ? P : never; }
 
-/** 用于 ComponentOptionsBase<T>，主要是 setup 传入的 props 和 data 的 this.$props，因为 setup 用得少，所以类型不保证完全正确
- * 在 data 和 setup 中，ee-vuex 的状态还未初始化，所以不能调用 ee-vuex 的 props
- */
-type ComponentOptionsBaseProps<VueT> = {
-  [K in keyof VueT as unknown extends VueT[K] ? never : K]: VueT[K]
-}
-
-/**
- * 创建一个针对vue组件props的ee-vuex仓库
- * 
- * injectStore的特别之处
- * 1. createStore的get/set方法this指向仓库；injectStore指向vue组件实例
- * 2. createStore独立存在；injectStore依赖vue选项式组件实例
- * 3. 通过set监听值变化，首次set在mounted而不是created，且任然会触发set
- * 4. props变为双向数据流，即可读可写
- * 
- * @param o - 选项式定义的Vue组件
+/** 创建一个选项式 vue 组件，{@link https://cn.vuejs.org/api/options-state.html#props|props} 使用 {@link createStore} 来构建，此外和 {@link defineComponent} 相比有以下特点
+ * 1. defineComponent 通过 watch 监听 props 值变化，首次赋值在 created 阶段，且不触发 watch；injectStore 通过 set 函数监听值变化，首次赋值在 mounted 而不是 created，且任然会触发 set
+ * 2. props 变为双向数据流，变为可读可写，可使用 v-model
+ * @param o - 选项式定义的 Vue 组件
  * @example injectStore({ props: { modelValue: 0, } })
  */
 export function injectStore<
@@ -94,8 +81,37 @@ export function injectStore<
       props: PropOptions | ComponentObjectPropsOptions<VueT> | Store<EEVuexT, EEVuexC, {}> | ThisType<This>
     } | ThisType<This>
   )//: Prettify<AnotherProps>
-  : DefineComponent<{}, RawBindings, D & StoreExt<StoreProps>, C, M, Mixin, Extends, Required<Extract<Emits, ObjectEmitsOptions>>, string, PublicProps, Partial<Pick<Props, keyof Defaults & keyof Props>> & Omit<Props, keyof Defaults & keyof Props>, {}, S>
+  : EasyDefineComponent<PropOptions, RawBindings, D, C, M, Mixin, Extends, E, S>
+  // : DefineComponent<{}, RawBindings, D & StoreExt<StoreProps>, C, M, Mixin, Extends, Required<Extract<Emits, ObjectEmitsOptions>>, string, PublicProps, Partial<Pick<Props, keyof Defaults & keyof Props>> & Omit<Props, keyof Defaults & keyof Props>, {}, S>
   // : { new(...args: any): This } & ComponentOptionsBase<Props & PublicProps, RawBindings, D & StoreExt<StoreProps>, C, M, Mixin, Extends, {}, string, {}, I, string, S> & PublicProps
+
+/** 用于简化 DefineComponent 的类型，便于 ts 编译成 .d.ts 时简化重复使用的泛型类型
+ * 
+ * 注意：由于比起 DefineComponent 多包了两层类型，组件再被用于继承时容易引发 ts 的编译报错
+ * 
+ * `Type instantiation is excessively deep and possibly infinite.`
+ * @example
+ * import { injectStore } from 'ee-vuex'
+ * const component = injectStore({
+ *   props: { modelValue: 0 }
+ * })
+ * export type componentTypeOf = typeof component;
+ * const component2 = injectStore({
+ *   // 编译 .d.ts 后 extends 会生成 EasyDefineComponent<{ modelValue: number }, ...>，容易引发编译错误
+ *   // extends: component
+ *   // 编译 .d.ts 后 extends 会生成 componentTypeOf，简化类型解决编译错误
+ *   extends: component as componentTypeOf
+ * })
+ */
+export type EasyDefineComponent<PropOptions, RawBindings, D, C, M, Mixin, Extends, E, S> = EeVuexDefineComponent<PropOptions, RawBindings, D, C, M, Mixin, Extends, E, S>
+
+type EeVuexDefineComponent<PropOptions, RawBindings, D, C, M, Mixin, Extends, E, S,
+  VueProps = FilterVueProps<PropOptions>,
+  StoreProps = FilterStoreProperty<PropOptions>,
+  Emits = E & StorePropertyToEmits<StoreProps>,
+  Props = VueProps & StoreProps & EmitsToProps<Extract<Emits, ObjectEmitsOptions>>,
+  Defaults = ExtractDefaultPropTypes<Pick<PropOptions, keyof VueProps & keyof PropOptions>>> = 
+  DefineComponent<{}, RawBindings, D & StoreExt<StoreProps>, C, M, Mixin, Extends, Required<Extract<Emits, ObjectEmitsOptions>>, string, PublicProps, Partial<Pick<Props, keyof Defaults & keyof Props>> & Omit<Props, keyof Defaults & keyof Props>, {}, S>
 
 // type Prettify<T> = {
 //   [K in keyof T]: T[K];
@@ -133,7 +149,7 @@ type AsyncState<T> = Readonly<{
 }>
 
 /** 仓库的额外函数 */
-type StoreExt<T> = T & IAsyncState<T>
+export type StoreExt<T> = T & IAsyncState<T>
 
 /** 获取仓库的异步状态 */
 interface IAsyncState<T> {
@@ -229,7 +245,7 @@ type Computed<T> = {
 
 type StoreComputed<SO, T> = unknown extends SO ? Computed<T> : Computed<SO>;
 
-/** 创建一个ee-vuex仓库
+/** 创建一个仓库
  * @param store - 仓库状态
  * @param option - 仓库详细配置或全局仓库名
  * @example
@@ -296,9 +312,3 @@ export function createStore<T, C, D, RT = {
    */
   set?: (key: keyof T, value: any, store: R) => void;
 } | string): R;
-
-export {
-  FilterStoreProperty,
-  FilterVueProps,
-  IAsyncState,
-}

@@ -56,12 +56,7 @@ export default createStore({
 定义完仓库，然后在一个组件中使用它
 ```
 // 引入仓库实例
-// import $ee from '@/stores/counter'
-// 或者
-// import eeVuex from 'ee-vuex'
-// const { $ee } = eeVuex // 或者 const $ee = eeVuex.$ee
-// 或者(推荐使用)
-const { $ee } = require('ee-vuex').default
+import $ee from '@/stores/counter'
 
 export default {
   setup() {

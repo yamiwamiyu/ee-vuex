@@ -42,6 +42,13 @@ const comp = injectStore({
 
             get(value) { },
         },
+        vuexInitSet: {
+            /** @type {Record<string, any>} */
+            init: {},
+            set(value, set) {
+
+            },
+        },
         vuexDefault: {
             default: testAsyncFunc,
             get(value) { },
@@ -78,6 +85,7 @@ const comp = injectStore({
 
 /** @type {InstanceType<typeof comp>['$props']} */
 const a = {
+    
 }
 
 const store = createStore({
@@ -90,7 +98,7 @@ const store = createStore({
     },
     asyncSetOnly: {
         /** @param {string} value  */
-        async set(value) {  }
+        async set(value) { }
     },
     hasGet: {
         init: '',
@@ -147,6 +155,6 @@ const store3 = createStore({
     vuexObj: { init: '' },
     vuexFull: {
         init: { a: '', b: 0 },
-        set(value, set) {}
+        set(value, set) { }
     },
 })

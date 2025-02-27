@@ -58,12 +58,7 @@ export default createStore({
 Define the store and use it in a component
 ```
 // Import Store
-// import $ee from '@/stores/counter'
-// or
-// import eeVuex from 'ee-vuex'
-// const { $ee } = eeVuex // or const $ee = eeVuex.$ee
-// or(Recommended)
-const { $ee } = require('ee-vuex').default
+import $ee from '@/stores/counter'
 
 export default {
   setup() {
