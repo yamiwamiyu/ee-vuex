@@ -83,6 +83,12 @@ const comp = injectStore({
     }
 });
 
+const comp2 = injectStore({
+    mounted() {
+        this.$data.getAsync('')
+    }
+})
+
 /** @type {InstanceType<typeof comp>['$props']} */
 const a = {
     
@@ -157,4 +163,7 @@ const store3 = createStore({
         init: { a: '', b: 0 },
         set(value, set) { }
     },
+})
+
+const store4 = createStore({
 })

@@ -9,7 +9,7 @@ type EmitsToProps<T extends EmitsOptions> = T extends string[] ? {
 
 /** 将状态生成对应事件 */
 type StorePropertyToEmits<T> = {
-  [K in keyof T as `update:${string & K}`]: (value: T[K]) => any;
+  [K in keyof T as `update:${string & K}`]-?: (value: T[K]) => any;
 }
 
 type PropConstructor<T = any> = {
@@ -71,7 +71,7 @@ export function injectStore<
   StoreProps = FilterStoreProperty<PropOptions>,
   Emits = E & StorePropertyToEmits<StoreProps>,
   Props = VueProps & StoreProps & EmitsToProps<Extract<Emits, ObjectEmitsOptions>>,
-  Defaults = ExtractDefaultPropTypes<Pick<PropOptions, keyof VueProps & keyof PropOptions>>,
+  // Defaults = ExtractDefaultPropTypes<Pick<PropOptions, keyof VueProps & keyof PropOptions>>,
   This = CreateComponentPublicInstance<Props, RawBindings, D & StoreExt<StoreProps>, C, M, Mixin, Extends, Required<Extract<Emits, ObjectEmitsOptions>>, Props, {}, false, I, S>,
 >
   (
@@ -81,15 +81,16 @@ export function injectStore<
       props: PropOptions | ComponentObjectPropsOptions<VueT> | Store<EEVuexT, EEVuexC, {}> | ThisType<This>
     } | ThisType<This>
   )//: Prettify<AnotherProps>
-  : EasyDefineComponent<PropOptions, RawBindings, D, C, M, Mixin, Extends, E, S>
-  // : DefineComponent<{}, RawBindings, D & StoreExt<StoreProps>, C, M, Mixin, Extends, Required<Extract<Emits, ObjectEmitsOptions>>, string, PublicProps, Partial<Pick<Props, keyof Defaults & keyof Props>> & Omit<Props, keyof Defaults & keyof Props>, {}, S>
-  // : { new(...args: any): This } & ComponentOptionsBase<Props & PublicProps, RawBindings, D & StoreExt<StoreProps>, C, M, Mixin, Extends, {}, string, {}, I, string, S> & PublicProps
+  // : EasyDefineComponent<PropOptions, RawBindings, D, C, M, Mixin, Extends, E, S>
+  : DefineComponent<{}, RawBindings, D & StoreExt<StoreProps>, C, M, Mixin, Extends, Required<Extract<Emits, ObjectEmitsOptions>>, string, PublicProps, Partial<Pick<Props, keyof Defaults & keyof Props>> & Omit<Props, keyof Defaults & keyof Props>, {}, S>
 
 /** 用于简化 DefineComponent 的类型，便于 ts 编译成 .d.ts 时简化重复使用的泛型类型
  * 
  * 注意：由于比起 DefineComponent 多包了两层类型，组件再被用于继承时容易引发 ts 的编译报错
  * 
  * `Type instantiation is excessively deep and possibly infinite.`
+ * 
+ * bug: 并且不知道为什么，出来的组件使用 T extends DefineComponent<infer PropOptions, ... infer PP> 两个类型会有问题
  * @example
  * import { injectStore } from 'ee-vuex'
  * const component = injectStore({
@@ -103,15 +104,28 @@ export function injectStore<
  *   extends: component as componentTypeOf
  * })
  */
-export type EasyDefineComponent<PropOptions, RawBindings, D, C, M, Mixin, Extends, E, S> = EeVuexDefineComponent<PropOptions, RawBindings, D, C, M, Mixin, Extends, E, S>
+// export type EasyDefineComponent<PropOptions, RawBindings, D,
+//   C extends ComputedOptions,
+//   M extends MethodOptions,
+//   Mixin extends ComponentOptionsMixin,
+//   Extends extends ComponentOptionsMixin,
+//   E extends ObjectEmitsOptions,
+//   S extends SlotsType> = EeVuexDefineComponent<PropOptions, RawBindings, D, C, M, Mixin, Extends, E, S>
 
-type EeVuexDefineComponent<PropOptions, RawBindings, D, C, M, Mixin, Extends, E, S,
-  VueProps = FilterVueProps<PropOptions>,
-  StoreProps = FilterStoreProperty<PropOptions>,
-  Emits = E & StorePropertyToEmits<StoreProps>,
-  Props = VueProps & StoreProps & EmitsToProps<Extract<Emits, ObjectEmitsOptions>>,
-  Defaults = ExtractDefaultPropTypes<Pick<PropOptions, keyof VueProps & keyof PropOptions>>> = 
-  DefineComponent<{}, RawBindings, D & StoreExt<StoreProps>, C, M, Mixin, Extends, Required<Extract<Emits, ObjectEmitsOptions>>, string, PublicProps, Partial<Pick<Props, keyof Defaults & keyof Props>> & Omit<Props, keyof Defaults & keyof Props>, {}, S>
+// type EeVuexDefineComponent<PropOptions, RawBindings, D,
+//   C extends ComputedOptions,
+//   M extends MethodOptions,
+//   Mixin extends ComponentOptionsMixin,
+//   Extends extends ComponentOptionsMixin,
+//   E extends ObjectEmitsOptions,
+//   S extends SlotsType,
+
+//   VueProps = FilterVueProps<PropOptions>,
+//   StoreProps = FilterStoreProperty<PropOptions>,
+//   Emits = E & StorePropertyToEmits<StoreProps>,
+//   Props = VueProps & StoreProps & EmitsToProps<Extract<Emits, ObjectEmitsOptions>>,
+//   Defaults = ExtractDefaultPropTypes<Pick<PropOptions, keyof VueProps & keyof PropOptions>>> =
+//   DefineComponent<{}, RawBindings, D & StoreExt<StoreProps>, C, M, Mixin, Extends, Required<Extract<Emits, ObjectEmitsOptions>>, string, PublicProps, Partial<Pick<Props, keyof Defaults & keyof Props>> & Omit<Props, keyof Defaults & keyof Props>, {}, S>
 
 // type Prettify<T> = {
 //   [K in keyof T]: T[K];
@@ -149,7 +163,8 @@ type AsyncState<T> = Readonly<{
 }>
 
 /** 仓库的额外函数 */
-export type StoreExt<T> = T & IAsyncState<T>
+// export type StoreExt<T> = T & ([keyof T] extends [never] ? {} : IAsyncState<T>);
+export type StoreExt<T> = T & IAsyncState<T>;
 
 /** 获取仓库的异步状态 */
 interface IAsyncState<T> {
@@ -312,3 +327,6 @@ export function createStore<T, C, D, RT = {
    */
   set?: (key: keyof T, value: any, store: R) => void;
 } | string): R;
+
+// 不加这个所有的类型将都会被引用到
+export { };
