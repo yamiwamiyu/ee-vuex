@@ -163,11 +163,11 @@ type AsyncState<T> = Readonly<{
 }>
 
 /** 仓库的额外函数 */
-// export type StoreExt<T> = T & ([keyof T] extends [never] ? {} : IAsyncState<T>);
-export type StoreExt<T> = T & IAsyncState<T>;
+export type StoreExt<T> = T & ([keyof T] extends [never] ? {} : IAsyncState<T>);
+// export type StoreExt<T> = T & IAsyncState<T>;
 
 /** 获取仓库的异步状态 */
-interface IAsyncState<T> {
+export interface IAsyncState<T> {
   /** 获取属性的 default, get, set 产生的未执行完的异步状态，可用于状态未加载完成前显示加载动画
    * @param key - 仓库的字段名
    * @example 
