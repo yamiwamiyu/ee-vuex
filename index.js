@@ -454,7 +454,9 @@ export function injectStore(o) {
       this[key] = value;
     }
     // 注入emits
-    mixin.emits.push("update:" + key);
+    // 显示定义了 emits，传递事件时就不会将事件函数显示在 $attrs 中，导致要透传给子组件时无法简单使用 v-bind="$attrs" 透传函数
+    // 所以这里干脆不注入 emits，类型上有提示就好
+    // mixin.emits.push("update:" + key);
   }
   // mounted的时候再给props赋值默认值
   // 现在属性有绑定到template时，created就已经读取了props的值，ee-vuex的默认值就已经生效了
