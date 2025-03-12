@@ -231,16 +231,25 @@ export function createStore(store, option) {
       },
       set: function (value) {
         // 相同的值不重新赋值
-        // reactive.set 时会调用一次 get，因为需要获取 oldValue。如果 get 返回的是 computed 对象，则不会触发到 get。createStore 已经没问题，确保 injectStore 也正确返回 computed 即可
+        // reactive.set 时会调用一次 get，因为需要获取 oldValue。如果 get 返回的是 computed 对象，则不会触发到 get
+        // createStore 已经没问题，injectStore 通过 toRaw 也正确返回 computed 解决了问题
         if (isEquals(v.value, value))
           return;
         // 外部调用set比调用get还要先的话，忽略掉get的默认值
         if (!setDefaultValue && __default.length)
           __default.length = 0;
         // 允许set的返回值覆盖原本应该设置的值
+        let setted = false;
+        const __tempSet = (value) => {
+          if (setted)
+            return;
+          setted = true;
+          __set(value);
+        }
         if (set) {
           // 将__set传入，允许set内部提前赋值
-          const temp = set.call(_this, value, __set);
+          // 这里传入的 __set 在函数内部调用了，且返回 undefined，会走最下面的 __set(value)，导致 option.set 重复回调了一遍，所以改用 __tempSet
+          const temp = set.call(_this, value, __tempSet);
           if (temp !== undefined) {
             if (temp?.constructor === Promise) {
               // 异步set时(例如api确认后再赋值)
@@ -248,10 +257,10 @@ export function createStore(store, option) {
                 // 操作成功时才赋值，如果操作成功返回空，则赋值原来set的值
                 if (i !== undefined) {
                   // console.log('异步 set', key, i)
-                  __set(i);
+                  __tempSet(i);
                   return i;
                 } else {
-                  __set(value);
+                  __tempSet(value);
                   return value;
                 }
               }));
@@ -262,7 +271,7 @@ export function createStore(store, option) {
               value = temp;
           }
         }
-        __set(value);
+        __tempSet(value);
       }
     })
 

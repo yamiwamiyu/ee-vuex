@@ -81,51 +81,60 @@ export function injectStore<
       props: PropOptions | ComponentObjectPropsOptions<VueT> | Store<EEVuexT, EEVuexC, {}> | ThisType<This>
     } | ThisType<This>
   )//: Prettify<AnotherProps>
-  // : EasyDefineComponent<PropOptions, RawBindings, D, C, M, Mixin, Extends, E, S>
-  : DefineComponent<{}, RawBindings, D & StoreExt<StoreProps>, C, M, Mixin, Extends, Required<Extract<Emits, ObjectEmitsOptions>>, string, PublicProps, Partial<Pick<Props, keyof Defaults & keyof Props>> & Omit<Props, keyof Defaults & keyof Props>, {}, S>
+  : EasyDefineComponent<PropOptions, RawBindings, D, C, M, Mixin, Extends, E, S>
+  // : DefineComponent<{}, RawBindings, D & StoreExt<StoreProps>, C, M, Mixin, Extends, Required<Extract<Emits, ObjectEmitsOptions>>, string, PublicProps, Partial<Pick<Props, keyof Defaults & keyof Props>> & Omit<Props, keyof Defaults & keyof Props>, {}, S>
 
-/** 用于简化 DefineComponent 的类型，便于 ts 编译成 .d.ts 时简化重复使用的泛型类型
+/** 用于简化 DefineComponent 的类型，便于 ts 编译成 .d.ts 时简化重复使用的泛型类型，还能保留 jsdoc 注释不被抛弃
  * 
  * 注意：由于比起 DefineComponent 多包了两层类型，组件再被用于继承时容易引发 ts 的编译报错
  * 
  * `Type instantiation is excessively deep and possibly infinite.`
  * 
+ * 为了防止这个问题，导出组件时可以使用具名接口来优化
+ * 
  * bug: 并且不知道为什么，出来的组件使用 T extends DefineComponent<infer PropOptions, ... infer PP> 两个类型会有问题
  * @example
+ * // component.vue
  * import { injectStore } from 'ee-vuex'
  * const component = injectStore({
  *   props: { modelValue: 0 }
  * })
- * export type componentTypeOf = typeof component;
+ * type componentTypeOf = typeof component;
+ * // 这里使用具名接口防止死循环
+ * export interface IComponent extends componentTypeOf {}
+ * // 组件的 jsdoc 注释写在这里
+ * export default component as IComponent;
+ * 
+ * // component2.vue 继承组件
  * const component2 = injectStore({
  *   // 编译 .d.ts 后 extends 会生成 EasyDefineComponent<{ modelValue: number }, ...>，容易引发编译错误
  *   // extends: component
- *   // 编译 .d.ts 后 extends 会生成 componentTypeOf，简化类型解决编译错误
- *   extends: component as componentTypeOf
+ *   // 编译 .d.ts 后 extends 会生成 IComponent，简化类型解决编译错误
+ *   extends: component
  * })
  */
-// export type EasyDefineComponent<PropOptions, RawBindings, D,
-//   C extends ComputedOptions,
-//   M extends MethodOptions,
-//   Mixin extends ComponentOptionsMixin,
-//   Extends extends ComponentOptionsMixin,
-//   E extends ObjectEmitsOptions,
-//   S extends SlotsType> = EeVuexDefineComponent<PropOptions, RawBindings, D, C, M, Mixin, Extends, E, S>
+export type EasyDefineComponent<PropOptions, RawBindings, D,
+  C extends ComputedOptions,
+  M extends MethodOptions,
+  Mixin extends ComponentOptionsMixin,
+  Extends extends ComponentOptionsMixin,
+  E extends ObjectEmitsOptions,
+  S extends SlotsType> = EeVuexDefineComponent<PropOptions, RawBindings, D, C, M, Mixin, Extends, E, S>
 
-// type EeVuexDefineComponent<PropOptions, RawBindings, D,
-//   C extends ComputedOptions,
-//   M extends MethodOptions,
-//   Mixin extends ComponentOptionsMixin,
-//   Extends extends ComponentOptionsMixin,
-//   E extends ObjectEmitsOptions,
-//   S extends SlotsType,
+type EeVuexDefineComponent<PropOptions, RawBindings, D,
+  C extends ComputedOptions,
+  M extends MethodOptions,
+  Mixin extends ComponentOptionsMixin,
+  Extends extends ComponentOptionsMixin,
+  E extends ObjectEmitsOptions,
+  S extends SlotsType,
 
-//   VueProps = FilterVueProps<PropOptions>,
-//   StoreProps = FilterStoreProperty<PropOptions>,
-//   Emits = E & StorePropertyToEmits<StoreProps>,
-//   Props = VueProps & StoreProps & EmitsToProps<Extract<Emits, ObjectEmitsOptions>>,
-//   Defaults = ExtractDefaultPropTypes<Pick<PropOptions, keyof VueProps & keyof PropOptions>>> =
-//   DefineComponent<{}, RawBindings, D & StoreExt<StoreProps>, C, M, Mixin, Extends, Required<Extract<Emits, ObjectEmitsOptions>>, string, PublicProps, Partial<Pick<Props, keyof Defaults & keyof Props>> & Omit<Props, keyof Defaults & keyof Props>, {}, S>
+  VueProps = FilterVueProps<PropOptions>,
+  StoreProps = FilterStoreProperty<PropOptions>,
+  Emits = E & StorePropertyToEmits<StoreProps>,
+  Props = VueProps & StoreProps & EmitsToProps<Extract<Emits, ObjectEmitsOptions>>,
+  Defaults = ExtractDefaultPropTypes<Pick<PropOptions, keyof VueProps & keyof PropOptions>>> =
+  DefineComponent<{}, RawBindings, D & StoreExt<StoreProps>, C, M, Mixin, Extends, Required<Extract<Emits, ObjectEmitsOptions>>, string, PublicProps, Partial<Pick<Props, keyof Defaults & keyof Props>> & Omit<Props, keyof Defaults & keyof Props>, {}, S>
 
 // type Prettify<T> = {
 //   [K in keyof T]: T[K];
