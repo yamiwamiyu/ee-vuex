@@ -339,3 +339,5 @@ export function createStore<T, C, D, O, RT = {
 
 // 不加这个所有的类型将都会被引用到
 export { };
+
+// todo: 当属性仅 get，且返回的是 Promise<string> 的时候，属性的类型应该是 string | undefined，而不仅仅是 string
