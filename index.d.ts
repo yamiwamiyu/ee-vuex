@@ -1,4 +1,4 @@
-import { defineComponent, EmitsOptions, ComponentOptionsMixin, ComputedOptions, MethodOptions, SlotsType, ComponentInjectOptions, ObjectEmitsOptions, ComponentObjectPropsOptions, CreateComponentPublicInstance, ComponentOptionsBase, Prop, PropType, ExtractPropTypes, PublicProps, DefineComponent, ExtractDefaultPropTypes } from 'vue';
+import { defineComponent, EmitsOptions, ComponentOptionsMixin, ComputedOptions, MethodOptions, SlotsType, ComponentInjectOptions, ObjectEmitsOptions, ComponentObjectPropsOptions, CreateComponentPublicInstance, ComponentOptionsBase, Prop, PropType, ExtractPropTypes, PublicProps, DefineComponent, ExtractDefaultPropTypes, App } from 'vue';
 
 /** Vue 定义的类型，但是没有加 export，只能复制出来 */
 type EmitsToProps<T extends EmitsOptions> = T extends string[] ? {
@@ -82,7 +82,7 @@ export function injectStore<
     } | ThisType<This>
   )//: Prettify<AnotherProps>
   : EasyDefineComponent<PropOptions, RawBindings, D, C, M, Mixin, Extends, E, S>
-  // : DefineComponent<{}, RawBindings, D & StoreExt<StoreProps>, C, M, Mixin, Extends, Required<Extract<Emits, ObjectEmitsOptions>>, string, PublicProps, Partial<Pick<Props, keyof Defaults & keyof Props>> & Omit<Props, keyof Defaults & keyof Props>, {}, S>
+// : DefineComponent<{}, RawBindings, D & StoreExt<StoreProps>, C, M, Mixin, Extends, Required<Extract<Emits, ObjectEmitsOptions>>, string, PublicProps, Partial<Pick<Props, keyof Defaults & keyof Props>> & Omit<Props, keyof Defaults & keyof Props>, {}, S>
 
 /** 用于简化 DefineComponent 的类型，便于 ts 编译成 .d.ts 时简化重复使用的泛型类型，还能保留 jsdoc 注释不被抛弃
  * 
@@ -298,13 +298,13 @@ type StoreComputed<SO, T> = unknown extends SO ? Computed<T> : Computed<SO>;
  *   async vuexSet3(value: number, set) { return await value * value },
  * })
  */
-export function createStore<T, C, D, RT = {
+export function createStore<T, C, D, O, RT = {
   [K in keyof C]: unknown extends T[K & keyof T] ?
   unknown extends C[K] ?
   D[K & keyof D] :
   C[K] :
   T[K & keyof T]
-}, R = StoreExt<RT>, This = R>(store: ThisType<This> | Store<T, C, D>, option?: {
+}, R = StoreExt<RT>, This = R>(store: ThisType<This> | Store<T, C, D>, option?: O | {
   /** 仓库名
    * 
    * (推荐：拥有类型推断) 不设置全局仓库名，使用时导入仓库
@@ -335,7 +335,7 @@ export function createStore<T, C, D, RT = {
    * @param store - 赋值的仓库实例
    */
   set?: (key: keyof T, value: any, store: R) => void;
-} | string): R;
+} | string): R & (unknown extends O ? {} : O extends string | { name: string } ? { install(app: App): void } : {});
 
 // 不加这个所有的类型将都会被引用到
 export { };

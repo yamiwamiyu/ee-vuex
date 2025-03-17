@@ -142,6 +142,10 @@ const store = createStore({
 
     }
 })
+// }, 'abc')
+// }, {name:'abc'})
+// }, {})
+// store.install // 测试是否有 install 函数
 
 const store3 = createStore({
     vuexInit: 1,
