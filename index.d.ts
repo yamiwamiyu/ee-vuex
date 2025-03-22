@@ -4,7 +4,7 @@ import { defineComponent, EmitsOptions, ComponentOptionsMixin, ComputedOptions, 
 type EmitsToProps<T extends EmitsOptions> = T extends string[] ? {
   [K in `on${Capitalize<T[number]>}`]?: (...args: any[]) => any;
 } : T extends ObjectEmitsOptions ? {
-  [K in `on${Capitalize<string & keyof T>}`]?: K extends `on${infer C}` ? (...args: T[Uncapitalize<C>] extends (...args: infer P) => any ? P : T[Uncapitalize<C>] extends null ? any[] : never) => any : never;
+  [K in `on${Capitalize<string & keyof T>}`]?: K extends `on${infer C}` ? (...args: Parameters<T[Uncapitalize<C>]>) => any : never;
 } : {};
 
 /** 将状态生成对应事件 */

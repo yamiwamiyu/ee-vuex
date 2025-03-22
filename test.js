@@ -83,9 +83,23 @@ const comp = injectStore({
     }
 });
 
+// todo: 还没有深究为什么 test 会是 any 类型，可以使用 PropType 代替先
 const comp2 = injectStore({
+    props: {
+        test: {
+            /** @type {string | import("vue").Component} */
+            default: 'div'
+        }
+    },
+    emits: {
+        /**
+         * 
+         * @param {string} a 
+         */
+        emittest: (a) => true,
+    },
     mounted() {
-        this.$data.getAsync('')
+        this.$emit('emittest', )
     }
 })
 
