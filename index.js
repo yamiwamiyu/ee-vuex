@@ -255,7 +255,8 @@ export function createStore(store, option) {
               // 异步set时(例如api确认后再赋值)
               pushAsync(key, temp.then(i => {
                 // 操作成功时才赋值，如果操作成功返回空，则赋值原来set的值
-                if (i !== undefined) {
+                // 不过原本的值就是 promise 的情况下，还是要赋值
+                if (i !== undefined || temp === value) {
                   // console.log('异步 set', key, i)
                   __tempSet(i);
                   return i;
