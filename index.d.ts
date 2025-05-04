@@ -4,7 +4,7 @@ import { defineComponent, EmitsOptions, ComponentOptionsMixin, ComputedOptions, 
 type EmitsToProps<T extends EmitsOptions> = T extends string[] ? {
   [K in `on${Capitalize<T[number]>}`]?: (...args: any[]) => any;
 } : T extends ObjectEmitsOptions ? {
-  [K in `on${Capitalize<string & keyof T>}`]?: K extends `on${infer C}` ? (...args: Parameters<T[Uncapitalize<C>]>) => any : never;
+  [K in `on${Capitalize<string & keyof T>}`]?: K extends `on${infer C}` ? (...args: Parameters<Extract<T[Uncapitalize<C>], (...args: any) => any>>) => any : never;
 } : {};
 
 /** 将状态生成对应事件 */
@@ -32,6 +32,8 @@ type FilterStoreProperty<T> = {
     // 值为 get/set 的简便写法
     K
   ) :
+  // 在 ts 中类型为 Prop<unknown, T>，主要用于泛型组件
+  Prop<any, any> extends T[K] ? never :
   // ee-vuex: 任意类型的值
   K
   ]?
@@ -42,9 +44,9 @@ type FilterStoreProperty<T> = {
 
 // ExtractPropTypes 中必有的属性为 required: true, boolean, default
 // 在生成文档时，其实只有 required: true 才是要求必填，自带默认值不应该必填
-type FilterVueProps<T> = { [K in keyof ExtractPropTypes<{
+type FilterVueProps<T> = ExtractPropTypes<{
   [K in keyof T as K extends keyof FilterStoreProperty<T> ? never : K]: T[K];
-}>]: T[K & keyof T] extends Prop<infer P> ? P : never; }
+}> extends infer Props ? Props : never;
 
 /** 创建一个选项式 vue 组件，{@link https://cn.vuejs.org/api/options-state.html#props|props} 使用 {@link createStore} 来构建，此外和 {@link defineComponent} 相比有以下特点
  * 1. defineComponent 通过 watch 监听 props 值变化，首次赋值在 created 阶段，且不触发 watch；injectStore 通过 set 函数监听值变化，首次赋值在 mounted 而不是 created，且任然会触发 set
