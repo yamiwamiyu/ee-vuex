@@ -1,5 +1,5 @@
 import { Component, Prop, PropType, toRaw } from 'vue';
-import { createStore, injectStore } from '.';
+import { createStore, injectStore, maybeAsync } from '.';
 
 /** 选项选中状态变化时的回调 */
 type OptionOnChange<T = string> = (o: IOption<T>, selected: boolean) => void;
@@ -33,23 +33,36 @@ interface IMultiple {
   max?: number,
 }
 
-function create<Option extends IOption<any>, Multiple extends boolean | IMultiple, ModelValue = Multiple extends false ? Option['value'] : NonNullable<Option['value']>[]>() {
+function create<T>() {
   const _default = injectStore({
     props: {
-      /** 选中项的值 */
-      modelValue: {
-        init: undefined as any as ModelValue,
+      onChanging: null as any as import('vue').PropType<(modelValue: T) => void | Async<any>>,
+      /** modelValue 改变后的回调函数 */
+      onChange: null as any as import('vue').PropType<(modelValue: T) => void>,
+      /** model 的值 */
+      modelValue(value: T, set) {
+        // if (this.onChanging) {
+        //   return (async () => {
+        //     if (await this.onChanging?.(value))
+        //       throw '取消 model 赋值';
+        //     set(value);
+        //     this._emitModelValueChange();
+        //   })()
+        // } else {
+        //   // 同步过，不产生 loading 状态
+        //   set(value);
+        //   this._emitModelValueChange();
+        // }
+        return maybeAsync(() => {
+          const changing = this.onChanging;
+          if (changing)
+            return changing(value);
+        }, (value) => {
+          if (value)
+            throw '拦截成功'
+          console.log('同步操作')
+        })
       },
-
-      /** 选项，可以通过异步函数来动态搜索选项 */
-      options: null as any as Prop<unknown, ((keyword: string) => Option[]) | Option[] | undefined>,
-      /** 多选模式 */
-      multiple: [Boolean, Object] as any as Prop<unknown, Multiple>,
-      /** 搜索的关键词 */
-      keyword: '',
-
-      /** 点击选项 */
-      onOptionClick: null as any as PropType<(option: Option) => void>,
     },
     data() {
       return {}

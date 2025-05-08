@@ -99,13 +99,13 @@ const comp2 = injectStore({
         emittest: (a) => true,
     },
     mounted() {
-        this.$emit('emittest', )
+        this.$emit('emittest',)
     }
 })
 
 /** @type {InstanceType<typeof comp>['$props']} */
 const a = {
-    
+
 }
 
 const store = createStore({

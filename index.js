@@ -30,6 +30,20 @@ export const eeVuex = {
   }
 };
 
+export function maybeAsync(_async, sync) {
+  if (!_async)
+    return sync();
+  const maybePromise = _async();
+  if (maybePromise && maybePromise.constructor === Promise) {
+    return (async () => {
+      const result = await maybePromise;
+      return sync(result);
+    })()
+  } else {
+    return sync();
+  }
+}
+
 export function createStore(store, option) {
   if (option) {
     if (option.constructor === String)

@@ -220,7 +220,8 @@ type Store<T, C, D> = {
 type StorePropertyBase<T> = StoreObject<T>
   // 0 个参数代表 get / 1 或 2 参函数代表 set
   // | ((...args: any[]) => Promise<T> | T)
-  | ((value: T, set: (value: any) => void, ...args: any[]) => Promise<T> | T | Promise<void> | void)
+  | ((value: T, set: (value: any) => void, ...args: any[]) => Promise<T> | T | Promise<void> | void | undefined)
+  // | undefined 是因为例如 set 中可能有个异步拦截函数，有拦截函数就返回异步，没拦截函数就同步。如果简单使用 async set 就算是没有拦截器也会有 1 帧的异步，新解决方案参见 maybeAsync
 
 // bug: get 或 set 中的 value 推断出了 T 类型，可是实际写调用 value 却又被识别为 any
 // ThisType<T> 导致的，使用 ThisType 使用 | 而不是使用 &
@@ -338,6 +339,27 @@ export function createStore<T, C, D, O, RT = {
    */
   set?: (key: keyof T, value: any, store: R) => void;
 } | string): R & (unknown extends O ? {} : O extends string | { name: string } ? { install(app: App): void } : {});
+
+/** 一个可能异步也可能不异步的操作，例如改变某个值之前有个可能异步的拦截器
+ * 1. 没有设定拦截器应该是同步操作，防止 1 帧的加载状态
+ * 2. 有拦截器时是异步操作，等待异步操作后再做同步操作
+ * 3. 对于仓库的异步 set 如果拦截成功抛出异常即可
+ * @param _async - 可能有的异步操作
+ * @param sync - 必做的同步操作
+ * @example
+ * // const onChanging: (() => void | Promise<any>) | undefined
+ * maybeAsync(onChanging, (result) => console.log('异步结果', result))
+ * maybeAsync(() => {
+ *   if (onChanging)
+ *     return onChanging(参数)
+ * }, (result) => {
+ *   console.log('异步结果', result)
+ *   if (result)
+ *     throw '拦截赋值'
+ *   // todo: 没有拦截，可执行同步操作
+ * })
+ */
+export function maybeAsync<Async, Sync>(_async: (() => void | Async | Promise<Async>) | undefined, sync: (result?: Async) => Sync): Sync | Promise<Sync>;
 
 // 不加这个所有的类型将都会被引用到
 export { };
