@@ -40,7 +40,7 @@ export function maybeAsync(_async, sync) {
       return sync(result);
     })()
   } else {
-    return sync();
+    return sync(maybePromise);
   }
 }
 
