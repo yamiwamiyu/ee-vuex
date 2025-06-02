@@ -171,6 +171,8 @@ type AsyncState<T> = Readonly<{
    * - rejected: 失败
    */
   status: ('pending' | 'fulfilled' | 'rejected') | undefined;
+  /** 当状态为 rejected 时的错误对象 */
+  error?: any;
 }>
 
 /** 仓库的额外函数 */

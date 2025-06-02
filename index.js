@@ -54,7 +54,7 @@ export function createStore(store, option) {
   // 持久化数据
   const pdatas = [];
   // 每个属性的异步状态
-  /** @type {Record<string, { promises: Promise[], async: { promise: Promise, async: boolean, status: ('pending' | 'fulfilled' | 'rejected') | undefined } }>} */
+  /** @type {Record<string, { promises: Promise[], async: { promise: Promise, async: boolean, status: ('pending' | 'fulfilled' | 'rejected') | undefined, error?: any } }>} */
   const asyncs = reactive({});
   function pushAsync(key, promise) {
     const a = asyncs[key];
@@ -67,8 +67,10 @@ export function createStore(store, option) {
         a.async.status = 'fulfilled'
       return ret;
     }).catch(ret => {
-      if (!arr.length)
+      if (!arr.length) {
         a.async.status = 'rejected'
+        a.async.error = ret;
+      }
       throw ret;
     });
     arr.push(withFinally);
