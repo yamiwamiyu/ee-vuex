@@ -161,11 +161,10 @@ export function createStore(store, option) {
     // 默认值为undefined
     const v = ref();
     // 因为set允许异步，所以同步和异步最后都是调用这个set来赋值
-    const __set = (value) => {
+    const __set = (value, before) => {
       // 相同的值不重新赋值
       if (isEquals(v.value, value)) {
-        if (option.set)
-          option.set.call(_this, key, value, x);
+        option.set?.call(_this, key, value, x, before);
         return;
       }
       // 持久化
@@ -176,8 +175,7 @@ export function createStore(store, option) {
           localStorage.removeItem(key);
       }
       v.value = value;
-      if (option.set)
-        option.set.call(_this, key, value, x);
+      option.set?.call(_this, key, value, x, before);
     }
     x[key] = computed({
       get: function () {
@@ -246,9 +244,12 @@ export function createStore(store, option) {
         return ret;
       },
       set: function (value) {
+        // todo: 原本值 false，之前异步赋值 true，还在异步中，又改为赋值 false，此时赋值 false 将失败
+        // 正确的流程是，之前的异步应该 reject 掉，或者让最新的赋值插入到异步队列后面(现在的异步是 race 而非队列)
         // 相同的值不重新赋值
         // reactive.set 时会调用一次 get，因为需要获取 oldValue。如果 get 返回的是 computed 对象，则不会触发到 get
         // createStore 已经没问题，injectStore 通过 toRaw 也正确返回 computed 解决了问题
+        const before = option.beforeSet?.call(_this, key, value, v.value, x);
         if (isEquals(v.value, value))
           return;
         // 外部调用set比调用get还要先的话，忽略掉get的默认值
@@ -260,7 +261,7 @@ export function createStore(store, option) {
           if (setted)
             return;
           setted = true;
-          __set(value);
+          __set(value, before);
         }
         if (set) {
           // 将__set传入，允许set内部提前赋值
@@ -437,9 +438,18 @@ export function injectStore(o) {
     const content = createStore(props,
       {
         this: this,
-        set(key, value) {
-          // props 全部作为双向数据流使用
-          this.$emit("update:" + key, value);
+        beforeSet(key) {
+          const temp = this.__ee_vuex_set[key];
+          delete this.__ee_vuex_set[key];
+          return temp;
+        },
+        set(key, value, store, propsSet) {
+          // todo: 如果是外部 props 值变化引起的赋值，不需要重新 update 出去
+          // 外部 props 变化也有可能是 update 出去引起的，一般来说重新赋值回来值相等会跳过这里
+          // 但如果 update 出去后外部对这个值进行了类型转换并触发外部 props 值变化则可能死循环
+          if (!propsSet)
+            // props 全部作为双向数据流使用
+            this.$emit("update:" + key, value);
         }
       });
     const raw = toRaw(content);
@@ -469,6 +479,7 @@ export function injectStore(o) {
       // 解决 reactive.set 会先 get 的问题，直接返回 computed 就不会触发 get
       data[key] = raw[key];
     }
+    data.__ee_vuex_set = {};
   }
   mixin.emits = [];
   mixin.watch = {};
@@ -477,6 +488,8 @@ export function injectStore(o) {
     mixin.watch["$props." + key] = function (value) {
       // 内外 set 有限定值范围的情况下可能会造成不同步的现象
       // 这算是数据流的 bug 但是很少有情况这么使用数据，所以忽略掉这个实现
+      // 若赋值成功也需要跳过 $emit("update:")
+      this.__ee_vuex_set[key] = true;
       this[key] = value;
     }
     // 注入emits

@@ -135,8 +135,9 @@ type EeVuexDefineComponent<PropOptions, RawBindings, D,
   StoreProps = FilterStoreProperty<PropOptions>,
   Emits = E & StorePropertyToEmits<StoreProps>,
   Props = VueProps & StoreProps & EmitsToProps<Extract<Emits, ObjectEmitsOptions>>,
-  Defaults = ExtractDefaultPropTypes<Pick<PropOptions, keyof VueProps & keyof PropOptions>>> =
-  DefineComponent<{}, RawBindings, D & StoreExt<StoreProps>, C, M, Mixin, Extends, Required<Extract<Emits, ObjectEmitsOptions>>, string, PublicProps, Partial<Pick<Props, keyof Defaults & keyof Props>> & Omit<Props, keyof Defaults & keyof Props>, {}, S>
+  Defaults = ExtractDefaultPropTypes<Pick<PropOptions, keyof VueProps & keyof PropOptions>>> 
+
+  = DefineComponent<{}, RawBindings, D & StoreExt<StoreProps>, C, M, Mixin, Extends, Required<Extract<Emits, ObjectEmitsOptions>>, string, PublicProps, Partial<Pick<Props, keyof Defaults & keyof Props>> & Omit<Props, keyof Defaults & keyof Props>, {}, S>
 
 // type Prettify<T> = {
 //   [K in keyof T]: T[K];
@@ -303,7 +304,7 @@ type StoreComputed<SO, T> = unknown extends SO ? Computed<T> : Computed<SO>;
  *   async vuexSet3(value: number, set) { return await value * value },
  * })
  */
-export function createStore<T, C, D, O, RT = {
+export function createStore<T, C, D, O, Before, RT = {
   [K in keyof C]: unknown extends T[K & keyof T] ?
   unknown extends C[K] ?
   D[K & keyof D] :
@@ -330,6 +331,8 @@ export function createStore<T, C, D, O, RT = {
   name?: string;
   /** 仓库定义的 get/set/默认值 方法调用时的this实例，默认为仓库实例 */
   this?: This;
+  /** 赋值之前回调，不管值是否相等。返回的结果会传递给 set 回调 */
+  beforeSet?: (this: This, key: keyof T, value: any, old: any, store: R) => Before;
   /** 仓库中所有属性赋值后的回调方法，可用于记录日志等调试业务
    * 
    * 回调有以下几种情况
@@ -339,7 +342,7 @@ export function createStore<T, C, D, O, RT = {
    * @param value - 赋值的值，不是 get 的值
    * @param store - 赋值的仓库实例
    */
-  set?: (key: keyof T, value: any, store: R) => void;
+  set?: (this: This, key: keyof T, value: any, store: R, before: Before) => void;
 } | string): R & (unknown extends O ? {} : O extends string | { name: string } ? { install(app: App): void } : {});
 
 /** 一个可能异步也可能不异步的操作，例如改变某个值之前有个可能异步的拦截器
