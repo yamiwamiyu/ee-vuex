@@ -184,4 +184,12 @@ const store3 = createStore({
 })
 
 const store4 = createStore({
+    value1: ''
+}, {
+    beforeSet() {
+        return 'hello before set';
+    },
+    set(key, value, store, set) {
+
+    }
 })
