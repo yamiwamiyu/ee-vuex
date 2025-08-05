@@ -135,7 +135,7 @@ type EeVuexDefineComponent<PropOptions, RawBindings, D,
   StoreProps = FilterStoreProperty<PropOptions>,
   Emits = E & StorePropertyToEmits<StoreProps>,
   Props = VueProps & StoreProps & EmitsToProps<Extract<Emits, ObjectEmitsOptions>>,
-  Defaults = ExtractDefaultPropTypes<Pick<PropOptions, keyof VueProps & keyof PropOptions>>> 
+  Defaults = ExtractDefaultPropTypes<Pick<PropOptions, keyof VueProps & keyof PropOptions>>>
 
   = DefineComponent<{}, RawBindings, D & StoreExt<StoreProps>, C, M, Mixin, Extends, Required<Extract<Emits, ObjectEmitsOptions>>, string, PublicProps, Partial<Pick<Props, keyof Defaults & keyof Props>> & Omit<Props, keyof Defaults & keyof Props>, {}, S>
 
@@ -224,7 +224,7 @@ type StorePropertyBase<T> = StoreObject<T>
   // 0 个参数代表 get / 1 或 2 参函数代表 set
   // | ((...args: any[]) => Promise<T> | T)
   | ((value: T, set: (value: any) => void, ...args: any[]) => Promise<T> | T | Promise<void> | void | undefined)
-  // | undefined 是因为例如 set 中可能有个异步拦截函数，有拦截函数就返回异步，没拦截函数就同步。如果简单使用 async set 就算是没有拦截器也会有 1 帧的异步，新解决方案参见 maybeAsync
+// | undefined 是因为例如 set 中可能有个异步拦截函数，有拦截函数就返回异步，没拦截函数就同步。如果简单使用 async set 就算是没有拦截器也会有 1 帧的异步，新解决方案参见 maybeAsync
 
 // bug: get 或 set 中的 value 推断出了 T 类型，可是实际写调用 value 却又被识别为 any
 // ThisType<T> 导致的，使用 ThisType 使用 | 而不是使用 &
@@ -343,6 +343,27 @@ export function createStore<T, C, D, O, Before, RT = {
    * @param store - 赋值的仓库实例
    */
   set?: (this: This, key: keyof T, value: any, store: R, before: Before) => void;
+  /** 持久化，默认会使用 localStorage 来进行持久化。也可以自定义例如 uni-app 使用 uni 的 api 来进行存取数据以达到跨平台的目的
+   * @example
+   * // 以 uni-app 为例
+   * createStore({
+   *   token: { p: 1 }
+   * }, {
+   *   persistence: {
+   *     set: uni.setStorageSync,
+   *     get: uni.getStorageSync,
+   *     remove: uni.removeStorageSync,
+   *   }
+   * })
+   */
+  persistence?: {
+    /** 写入 */
+    set<K extends keyof T>(key: K, value: R[K]): void,
+    /** 读取 */
+    get<K extends keyof T>(key: K): R[K],
+    /** 删除。不指定则会写入 null */
+    remove?<K extends keyof T>(key: K): void,
+  },
 } | string): R & (unknown extends O ? {} : O extends string | { name: string } ? { install(app: App): void } : {});
 
 /** 一个可能异步也可能不异步的操作，例如改变某个值之前有个可能异步的拦截器

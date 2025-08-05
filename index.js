@@ -169,10 +169,20 @@ export function createStore(store, option) {
       }
       // 持久化
       if (p) {
-        if (value != null)
-          localStorage.setItem(key, JSON.stringify(value));
-        else
-          localStorage.removeItem(key);
+        if (option.persistence) {
+          if (value != null)
+            option.persistence.set(key, JSON.stringify(value));
+          else
+            if (option.persistence.remove)
+              option.persistence.remove(key);
+            else
+              option.persistence.set(key, null);
+        } else {
+          if (value != null)
+            localStorage.setItem(key, JSON.stringify(value));
+          else
+            localStorage.removeItem(key);
+        }
       }
       v.value = value;
       option.set?.call(_this, key, value, x, before);
@@ -329,7 +339,9 @@ export function createStore(store, option) {
     if (p) {
       // 先放入数组，等整个store声明完成后再赋值，防止赋值时触发set会引起store中其它状态变化
       pdatas.push(() => {
-        const pdata = JSON.parse(localStorage.getItem(key));
+        const pdata = option.persistence ?
+          option.persistence.get(key) :
+          JSON.parse(localStorage.getItem(key));
         if (pdata != null) {
           // 有值就赋值并且清空__default
           __default.length = 0;
