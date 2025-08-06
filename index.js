@@ -108,10 +108,13 @@ export function createStore(store, option) {
             __default.push(value);
           }
         }
-      } else if (value === localStorage) {
-        // 直接key: localStorage代表要持久化这个状态，其它默认
-        p = true;
-      } else if (value.constructor === Object) {
+      } 
+      // 非 web 平台可能导致报错说没有 localStorage 变量
+      // else if (value === localStorage) {
+      //   // 直接key: localStorage代表要持久化这个状态，其它默认
+      //   p = true;
+      // } 
+      else if (value.constructor === Object) {
         if (value.hasOwnProperty('p')
           || value.hasOwnProperty('get')
           || value.hasOwnProperty('set')
@@ -171,7 +174,7 @@ export function createStore(store, option) {
       if (p) {
         if (option.persistence) {
           if (value != null)
-            option.persistence.set(key, JSON.stringify(value));
+            option.persistence.set(key, value);
           else
             if (option.persistence.remove)
               option.persistence.remove(key);
