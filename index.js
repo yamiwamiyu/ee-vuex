@@ -201,7 +201,8 @@ export function createStore(store, option) {
               // promise则等待异步结束
               let dret = d;
               if (d.constructor !== Promise)
-                dret = d.call(_this, _this);
+                // 这里传入当前的值，可能 init 默认为一个对象，这里可以直接使用这个对象给其增加字段
+                dret = d.call(_this, v.value, _this);
               if (dret && dret.constructor === Promise) {
                 pushAsync(key, dret.then(i => {
                   // 有异步时，默认值将形成队列，set时防止清空后面的默认值

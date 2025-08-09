@@ -234,7 +234,7 @@ type StoreObject<T = any> = {
   /** 简单默认值，不支持异步，当 default 异步时作为返回前的值使用 */
   init?: T,
   /** 默认值，可以使用异步方法或返回 Promise 异步获取默认值 */
-  default?: (() => Promise<T> | T) | Promise<T> | T;
+  default?: ((value?: T) => Promise<T> | T) | Promise<T> | T;
 }
 
 type Computed<T> = {
@@ -358,9 +358,9 @@ export function createStore<T, C, D, O, Before, RT = {
    */
   persistence?: {
     /** 写入 */
-    set<K extends keyof T>(key: K, value: R[K]): void,
+    set<K extends keyof T>(key: K, value: R[K & keyof R]): void,
     /** 读取 */
-    get<K extends keyof T>(key: K): R[K],
+    get<K extends keyof T>(key: K): R[K & keyof R],
     /** 删除。不指定则会写入 null */
     remove?<K extends keyof T>(key: K): void,
   },
