@@ -350,9 +350,20 @@ export function createStore<T, C, D, O, Before, RT = {
    *   token: { p: 1 }
    * }, {
    *   persistence: {
-   *     set: uni.setStorageSync,
-   *     get: uni.getStorageSync,
-   *     remove: uni.removeStorageSync,
+   *     get: (key) => {
+   *       const value = uni.getStorageSync(key);
+   *       if (value == '')
+   *         return;
+   *       else
+   *         return value;
+   *     },
+   *     set: (key, value) => {
+   *       if (value)
+   *         uni.setStorageSync(key, value);
+   *       else
+   *         uni.removeStorageSync(key);
+   *     },
+   *     remove: uni.removeStorageSync
    *   }
    * })
    */
