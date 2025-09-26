@@ -528,4 +528,6 @@ export function injectStore(o) {
   return o;
 }
 
+// todo: 可能为仓库增加一个 reset 函数，主要用于退出登录时，默认值异步从接口仅获取一次的字段，重新登录后就无法获取了
+
 export default eeVuex;
