@@ -229,8 +229,8 @@ type StorePropertyBase<T> = StoreObject<T>
 // bug: get 或 set 中的 value 推断出了 T 类型，可是实际写调用 value 却又被识别为 any
 // ThisType<T> 导致的，使用 ThisType 使用 | 而不是使用 &
 type StoreObject<T = any> = {
-  /** 是否持久化到localStorage，持久化的key默认为当前属性名 */
-  p?: boolean | number;
+  /** 是否持久化到localStorage，持久化的 key 默认为当前属性名，可以通过配置字符串指定持久化的名字 */
+  p?: boolean | number | string;
   /** 简单默认值，不支持异步，当 default 异步时作为返回前的值使用 */
   init?: T,
   /** 默认值，可以使用异步方法或返回 Promise 异步获取默认值 */
@@ -368,10 +368,24 @@ export function createStore<T, C, D, O, Before, RT = {
    * })
    */
   persistence?: {
+    /** 持久化的 key 处理，常用于相同域名不同网站防止 localStorage 的字段冲突
+     * 
+     * 例如网站 a 和网站 b 通过 eecode.top/a 和 eecode.top/b 来访问，vite + vue-router 配置如下
+     * - 路由配置：`createRouter({ history: createWebHistory('/a/') })`
+     * - vite.config 配置：`defineConfig({ base: '/a/' })`
+     * - nginx 配置：`location ~ ^/(?<first_dir>[^/]+)/(.*)$ { try_files $uri $uri/ /$first_dir/index.html; }`
+     * 
+     * 两个网站的 localStorage 是互通的，如果登录状态都叫 token 且会持久化，那么两个网站的 token 就互相覆盖掉了
+     * 
+     * 配置这个 key 可以统一处理持久化的键名
+     * - string: 会为键增加一个前缀防止不同网站重名，例如 token，前缀 a 和 b 就会存储为 a-token 和 b-token
+     * - 函数：除了可以防止不同网站重名，还可以防止相同网站不同仓库属性重名。函数传入键名和仓库名，可以自定义输出 (key, name) => `a-{name}-{key}` 最终为 a-user-token
+     */
+    key?: string | ((key: string, storeName?: string) => string),
     /** 写入 */
-    set<K extends keyof T>(key: K, value: R[K & keyof R]): void,
+    set?<K extends keyof T>(key: K, value: R[K & keyof R]): void,
     /** 读取 */
-    get<K extends keyof T>(key: K): R[K & keyof R],
+    get?<K extends keyof T>(key: K): R[K & keyof R],
     /** 删除。不指定则会写入 null */
     remove?<K extends keyof T>(key: K): void,
   },

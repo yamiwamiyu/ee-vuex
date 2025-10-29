@@ -186,6 +186,8 @@ const store3 = createStore({
 const store4 = createStore({
     value1: ''
 }, {
+    persistence: {
+    },
     beforeSet() {
         return 'hello before set';
     },

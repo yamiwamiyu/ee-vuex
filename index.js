@@ -108,13 +108,7 @@ export function createStore(store, option) {
             __default.push(value);
           }
         }
-      } 
-      // 非 web 平台可能导致报错说没有 localStorage 变量
-      // else if (value === localStorage) {
-      //   // 直接key: localStorage代表要持久化这个状态，其它默认
-      //   p = true;
-      // } 
-      else if (value.constructor === Object) {
+      } else if (value.constructor === Object) {
         if (value.hasOwnProperty('p')
           || value.hasOwnProperty('get')
           || value.hasOwnProperty('set')
@@ -122,7 +116,7 @@ export function createStore(store, option) {
           || value.hasOwnProperty('default')) {
           // ee-vuex结构
           if (value.p)
-            p = true;
+            p = typeof (value.p) === 'string' ? value.p : true;
           if (value.get)
             get = value.get;
           if (value.set)
@@ -157,6 +151,18 @@ export function createStore(store, option) {
       }
     }
 
+    const getPKey = () => {
+      let pkey = p === true ? key : p;
+      const k = option.persistence?.key;
+      if (k) {
+        if (typeof k === 'string')
+          pkey = `${k}-${pkey}`
+        else
+          pkey = k(pkey, option.name);
+      }
+      return pkey;
+    }
+
     // get设置默认值时，set不清空默认值
     let setDefaultValue = false;
     // 异步 get 获取值时，防止死循环
@@ -172,19 +178,19 @@ export function createStore(store, option) {
       }
       // 持久化
       if (p) {
-        if (option.persistence) {
-          if (value != null)
-            option.persistence.set(key, value);
+        const k = getPKey();
+        if (value != null) {
+          if (option.persistence?.set)
+            option.persistence?.set(k, value);
           else
-            if (option.persistence.remove)
-              option.persistence.remove(key);
-            else
-              option.persistence.set(key, null);
+            localStorage.setItem(k, JSON.stringify(value));
         } else {
-          if (value != null)
-            localStorage.setItem(key, JSON.stringify(value));
+          if (option.persistence?.remove)
+            option.persistence?.remove(k);
+          else if (option.persistence?.set)
+            option.persistence?.set(k, null);
           else
-            localStorage.removeItem(key);
+            localStorage.removeItem(k);
         }
       }
       v.value = value;
@@ -343,9 +349,10 @@ export function createStore(store, option) {
     if (p) {
       // 先放入数组，等整个store声明完成后再赋值，防止赋值时触发set会引起store中其它状态变化
       pdatas.push(() => {
-        const pdata = option.persistence ?
-          option.persistence.get(key) :
-          JSON.parse(localStorage.getItem(key));
+        const k = getPKey();
+        const pdata = option.persistence?.get ?
+          option.persistence.get(k) :
+          JSON.parse(localStorage.getItem(k));
         if (pdata != null) {
           // 有值就赋值并且清空__default
           __default.length = 0;
@@ -360,12 +367,8 @@ export function createStore(store, option) {
     p();
 
   if (option.name) {
-    if (eeVuex[option.name]) {
-      console.error("The vuex object already contains a store named", option.name)
-    } else {
-      x.install = (vue) => { vue.config.globalProperties[option.name] = x; }
-      eeVuex[option.name] = x;
-    }
+    x.install = (vue) => { vue.config.globalProperties[option.name] = x; }
+    eeVuex[option.name] = x;
   }
 
   return x;
