@@ -51,10 +51,11 @@ export function createStore(store, option) {
   } else
     option = {};
 
-  // 持久化数据
-  const pdatas = [];
+  // 持久化数据，改为对象便于按key查找
+  /** @type {Record<string, () => void>} */
+  const pdatas = {};
   // 每个属性的异步状态
-  /** @type {Record<string, { promises: Promise[], async: { promise: Promise, async: boolean, status: ('pending' | 'fulfilled' | 'rejected') | undefined, error?: any } }>} */
+  /** @type {Record<string, { promises: Promise[], async: { promise: Promise, async: boolean, status: ('pending' | 'fulfilled' | 'rejected') | undefined, error?: any }, __default: any[] }>} */
   const asyncs = reactive({});
   function pushAsync(key, promise) {
     const a = asyncs[key];
@@ -79,6 +80,33 @@ export function createStore(store, option) {
   const x = reactive({});
   x.getAsync = function (key) {
     return asyncs[key]?.async;
+  }
+  x.reset = function (...keys) {
+    // 如果没有传参数，重置所有属性
+    const targetKeys = keys.length ? keys : Object.keys(asyncs);
+    
+    for (const key of targetKeys) {
+      const a = asyncs[key];
+      if (!a) continue;
+      
+      // 重置当前值为 undefined
+      a.reset();
+      
+      // 清空异步状态
+      a.promises = [];
+      a.async.status = undefined;
+      a.async.error = undefined;
+      
+      // 还原默认值数组
+      a.__default.length = 0;
+      a.__default.push(...a.__defaultCopy);
+      
+      // 读取持久化数据，也就是持久化数据无法 reset，除非外部手动清空持久化数据
+      if (pdatas[key])
+        pdatas[key]();
+    }
+    
+    return this;
   }
   // this 指针对象
   const _this = option.this ?? x;
@@ -313,8 +341,14 @@ export function createStore(store, option) {
       }
     })
 
+    // 保存默认值副本用于 reset
+    const __defaultCopy = [...__default];
+    
     asyncs[key] = {
       promises: [],
+      __default,
+      __defaultCopy,
+      reset: () => v.value = undefined,
       async: {
         promise: computed(() => {
           // 首次触发 get
@@ -347,8 +381,8 @@ export function createStore(store, option) {
 
     // 还原持久化的值
     if (p) {
-      // 先放入数组，等整个store声明完成后再赋值，防止赋值时触发set会引起store中其它状态变化
-      pdatas.push(() => {
+      // 先放入对象，等整个store声明完成后再赋值，防止赋值时触发set会引起store中其它状态变化
+      pdatas[key] = () => {
         const k = getPKey();
         const pdata = option.persistence?.get ?
           option.persistence.get(k) :
@@ -358,13 +392,13 @@ export function createStore(store, option) {
           __default.length = 0;
           x[key] = pdata;
         }
-      })
+      };
     }
   }
 
   // 此时store已经声明完毕，还原持久化的值触发set引起其它state变化也没有问题
-  for (const p of pdatas)
-    p();
+  for (const key in pdatas)
+    pdatas[key]();
 
   if (option.name) {
     x.install = (vue) => { vue.config.globalProperties[option.name] = x; }
@@ -530,7 +564,5 @@ export function injectStore(o) {
   o.mixins.push(mixin);
   return o;
 }
-
-// todo: 可能为仓库增加一个 reset 函数，主要用于退出登录时，默认值异步从接口仅获取一次的字段，重新登录后就无法获取了
 
 export default eeVuex;

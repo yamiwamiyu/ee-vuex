@@ -177,11 +177,11 @@ type AsyncState<T> = Readonly<{
 }>
 
 /** 仓库的额外函数 */
-export type StoreExt<T> = T & ([keyof T] extends [never] ? {} : IAsyncState<T>);
+export type StoreExt<T> = T & ([keyof T] extends [never] ? {} : IStoreExt<T>);
 // export type StoreExt<T> = T & IAsyncState<T>;
 
-/** 获取仓库的异步状态 */
-export interface IAsyncState<T> {
+/** 仓库的额外操作 */
+export interface IStoreExt<T> {
   /** 获取属性的 default, get, set 产生的未执行完的异步状态，可用于状态未加载完成前显示加载动画
    * @param key - 仓库的字段名
    * @example 
@@ -211,6 +211,14 @@ export interface IAsyncState<T> {
    * })()
    */
   getAsync: <K extends keyof T>(key: K) => AsyncState<T[K]>;
+
+  /** 重置仓库的属性。注意持久化的属性重置任然读取持久化的值，可以先置为 null 再重置
+   * @param key - 指定多个字段名，若不指定则重置所有属性
+   * @returns 仓库实例，可用于链式调用
+   * @example
+   * store.reset('a').reset('b')
+   */
+  reset: <K extends keyof T>(...key: K[]) => typeof this
 }
 
 /** 仓库 */
