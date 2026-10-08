@@ -357,14 +357,16 @@ export function createStore(store, option) {
           const a = asyncs[key];
           if (!a.promises.length)
             return Promise.resolve(x[key]);
-          return new Promise(async resolve => {
+          return new Promise(async (resolve, reject) => {
             let result;
             while (a.promises.length) {
               try {
                 result = await Promise.race(a.promises);
               } catch (err) {
-                if (!a.promises.length)
-                  throw err;
+                if (!a.promises.length) {
+                  reject(err);
+                  return;
+                }
               }
             }
             resolve(result);
